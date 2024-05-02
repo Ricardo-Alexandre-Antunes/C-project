@@ -1,6 +1,6 @@
 grammar Qlang;
 
-statList: (statement? ';')*;
+statList: (statement? ';' (NEWLINE)*)* EOF;
 
 statement: 
         newQuestion
@@ -12,7 +12,7 @@ statement:
         ;
         
 code:
-        'code' ID 'is' NEWLINE? '"[' codeBlock ']"'
+        'code ' ID ' is' (' ')* NEWLINE? '"[' codeBlock ']"'
         ;
 
 codeBlock:
