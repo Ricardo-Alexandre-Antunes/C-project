@@ -3,4 +3,4 @@ Project for Compilers (not Compilators) class for Software Engineering @ Univers
 
 **Contact me @**
 
-Discord: xhugodx
+Discord: [CENSORED]
