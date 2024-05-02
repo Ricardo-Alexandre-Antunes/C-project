@@ -1,0 +1,1 @@
+Pasta para fazer linguagem principal para o qlang
