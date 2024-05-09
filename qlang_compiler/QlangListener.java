@@ -17,15 +17,77 @@ public interface QlangListener extends ParseTreeListener {
 	 */
 	void exitStatList(QlangParser.StatListContext ctx);
 	/**
-	 * Enter a parse tree produced by {@link QlangParser#statement}.
+	 * Enter a parse tree produced by the {@code StatementQuestion}
+	 * labeled alternative in {@link QlangParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void enterStatement(QlangParser.StatementContext ctx);
+	void enterStatementQuestion(QlangParser.StatementQuestionContext ctx);
 	/**
-	 * Exit a parse tree produced by {@link QlangParser#statement}.
+	 * Exit a parse tree produced by the {@code StatementQuestion}
+	 * labeled alternative in {@link QlangParser#statement}.
 	 * @param ctx the parse tree
 	 */
-	void exitStatement(QlangParser.StatementContext ctx);
+	void exitStatementQuestion(QlangParser.StatementQuestionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code StatementDeclaration}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementDeclaration(QlangParser.StatementDeclarationContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code StatementDeclaration}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementDeclaration(QlangParser.StatementDeclarationContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code StatemtentAssignment}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatemtentAssignment(QlangParser.StatemtentAssignmentContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code StatemtentAssignment}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatemtentAssignment(QlangParser.StatemtentAssignmentContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code StatementExecution}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementExecution(QlangParser.StatementExecutionContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code StatementExecution}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementExecution(QlangParser.StatementExecutionContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code StatementExport}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementExport(QlangParser.StatementExportContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code StatementExport}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementExport(QlangParser.StatementExportContext ctx);
+	/**
+	 * Enter a parse tree produced by the {@code StatementCode}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementCode(QlangParser.StatementCodeContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code StatementCode}
+	 * labeled alternative in {@link QlangParser#statement}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementCode(QlangParser.StatementCodeContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link QlangParser#code}.
 	 * @param ctx the parse tree

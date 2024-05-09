@@ -3,12 +3,12 @@ grammar Qlang;
 statList: (statement? ';')* EOF;
 
 statement: 
-        newQuestion
-        | declaration   #declaration
-        | assignment    #assignment
-        | execution     #execution
-        | export        #export
-        | code
+        newQuestion     #StatementQuestion
+        | declaration   #StatementDeclaration
+        | assignment    #StatemtentAssignment
+        | execution     #StatementExecution
+        | export        #StatementExport
+        | code          #StatementCode
         ;
         
 code:
@@ -16,31 +16,30 @@ code:
         ;
 
 codeBlock:
-        'ola'
-        | 'hey'
+        STRING+
         ;
 
 
 
 newQuestion: 
-        'multi-choice ' ID ' is' ('\n' expr ';')+ 'end' #MultiChoiceQuestion
-        | 'hole ' ID ' is' ('\n' expr ';')+ 'end' #HoleQuestion
-        | 'open ' ID ' is' ('\n' expr ';')+ 'end' #OpenQuestion
-        | 'cole-hole ' ID ' is' ('\n' expr ';')+ 'end' #ColeHoleQuestion
-        | 'cole-open ' ID ' is' ('\n' expr ';')+ 'end' #ColeOpenQuestion
-        | 'code-output ' ID ' is' ('\n' expr ';')+ 'end' #CodeOutputQuestion
+        'multi-choice' ID 'is' ( expr ';')+ 'end' #MultiChoiceQuestion
+        | 'hole' ID 'is' (expr ';')+ 'end' #HoleQuestion
+        | 'open' ID 'is' (expr ';')+ 'end' #OpenQuestion
+        | 'cole-hole' ID 'is' (expr ';')+ 'end' #ColeHoleQuestion
+        | 'cole-open' ID 'is' (expr ';')+ 'end' #ColeOpenQuestion
+        | 'code-output' ID 'is' (expr ';')+ 'end' #CodeOutputQuestion
         ;
 
 declaration:
-        ID ': ' 'question' #QuestionDeclaration
-        | ID ': ' 'fraction' #FractionDeclaration 
-        | ID ': ' 'integer' #IntegerDeclaration
-        | ID ': ' 'text' #TextDeclaration
+        ID ':' 'question' #QuestionDeclaration
+        | ID ':' 'fraction' #FractionDeclaration 
+        | ID ':' 'integer' #IntegerDeclaration
+        | ID ':' 'text' #TextDeclaration
         ;
 
 assignment:
-        ID ' := ' ID #IDAssignment
-        | ID ' := ' 'new' ID #NewAssignment
+        ID ':=' ID #IDAssignment
+        | ID ':=' 'new' ID #NewAssignment
         ;
 
 execution:
@@ -48,7 +47,7 @@ execution:
         ;
 
 export:
-        'export ' ID ' to ' '"' ID '"'
+        'export' ID 'to' '"' ID '"'
         ;
 
 expr :  
@@ -62,23 +61,29 @@ ifLineSentence :
     ;
 
 ifBlock : 
-    'if ' expr ' then' ('\n' statement)+
+    'if' expr 'then' (statement)+
     ;
 
 elseifBlock :
-    'elseif ' expr ' then' ('\n' statement)+
+    'elseif' expr 'then' (statement)+
     ;
 
 elseBlock: 
-    'else ' ('\n' statement)+
+    'else'(statement)+
     ;
 
+STRING : [ a-zA-Z_1-9]+;
+VERBATIMOPEN : ('"' | '\'') ('{' | '[' | '<');
+VERBATIMCLOSE : ('"' | '\'') ('}' | ']' | '<');
+PIL : VERBATIMOPEN .*? VERBATIMCLOSE; 
 ID : [a-zA-Z_]+ ;
 Integer : [0-9]+ ;
 Minus : '-' ;
 SKIPPING : [ \n\t]+ -> skip ;
 NEWLINE:'\r'? '\n' ;
-COMMENT: '#' .*? '\n' -> skip ;
+BLOCKCOMMENT: '#//' .*? '//#' -> skip ;
+SINGLECOMMENT: '#' .*? '\n' -> skip ;
+
 
 
 
