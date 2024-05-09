@@ -1,8 +1,8 @@
 grammar pil ;
 
-program: statement* EOF ;
+program: (statement ';')* EOF ;
 
-statement: (assignment | write | if) ';' ;
+statement: (assignment | write | if) ;
 
 if: 'if' expr 'then' statement ('else' statement)? 'end' ;
 
