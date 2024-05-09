@@ -1,18 +1,18 @@
 grammar Qlang;
 
-statList: (statement? ';')*;
+statList: (statement? ';')* EOF;
 
 statement: 
         newQuestion
-        | declaration
-        | assignment
-        | execution
-        | export
+        | declaration   #declaration
+        | assignment    #assignment
+        | execution     #execution
+        | export        #export
         | code
         ;
         
 code:
-        'code' ID 'is' NEWLINE? '"[' codeBlock ']"'
+        'code' ID 'is' '"[' codeBlock ']"'
         ;
 
 codeBlock:
@@ -76,7 +76,7 @@ elseBlock:
 ID : [a-zA-Z_]+ ;
 Integer : [0-9]+ ;
 Minus : '-' ;
-SKIPPING : [\t]+ -> skip ;
+SKIPPING : [ \n\t]+ -> skip ;
 NEWLINE:'\r'? '\n' ;
 COMMENT: '#' .*? '\n' -> skip ;
 
