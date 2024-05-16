@@ -28,6 +28,54 @@ public class QlangBaseListener implements QlangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterStatementWithBreak(QlangParser.StatementWithBreakContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStatementWithBreak(QlangParser.StatementWithBreakContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterStatementComposition(QlangParser.StatementCompositionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitStatementComposition(QlangParser.StatementCompositionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterCommandWithBreak(QlangParser.CommandWithBreakContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCommandWithBreak(QlangParser.CommandWithBreakContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterCommandComposition(QlangParser.CommandCompositionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitCommandComposition(QlangParser.CommandCompositionContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterStatementQuestion(QlangParser.StatementQuestionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -107,18 +155,6 @@ public class QlangBaseListener implements QlangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitCode(QlangParser.CodeContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void enterCodeBlock(QlangParser.CodeBlockContext ctx) { }
-	/**
-	 * {@inheritDoc}
-	 *
-	 * <p>The default implementation does nothing.</p>
-	 */
-	@Override public void exitCodeBlock(QlangParser.CodeBlockContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *
@@ -268,6 +304,18 @@ public class QlangBaseListener implements QlangListener {
 	 *
 	 * <p>The default implementation does nothing.</p>
 	 */
+	@Override public void enterHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
 	@Override public void enterExecution(QlangParser.ExecutionContext ctx) { }
 	/**
 	 * {@inheritDoc}
@@ -323,6 +371,18 @@ public class QlangBaseListener implements QlangListener {
 	 * <p>The default implementation does nothing.</p>
 	 */
 	@Override public void exitUsesCodeSentence(QlangParser.UsesCodeSentenceContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void enterExpr(QlangParser.ExprContext ctx) { }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation does nothing.</p>
+	 */
+	@Override public void exitExpr(QlangParser.ExprContext ctx) { }
 	/**
 	 * {@inheritDoc}
 	 *

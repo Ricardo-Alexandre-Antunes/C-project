@@ -1,6 +1,15 @@
+
 grammar Qlang;
 
-statList: (statement? ';')* EOF;
+statList: statementComposition EOF;
+
+statementWithBreak: (statement ';');
+
+statementComposition: statementWithBreak* (statement | statementWithBreak);
+
+commandWithBreak: (command ';');
+
+commandComposition: commandWithBreak* (command | commandWithBreak);
 
 statement: 
         newQuestion     #StatementQuestion
@@ -12,22 +21,16 @@ statement:
         ;
         
 code:
-        'code' ID 'is' '"[' codeBlock ']"'
+        'code' ID 'is' PIL
         ;
-
-codeBlock:
-        STRING+
-        ;
-
-
 
 newQuestion: 
-        'multi-choice' ID 'is' ( expr ';')+ 'end' #MultiChoiceQuestion
-        | 'hole' ID 'is' (expr ';')+ 'end' #HoleQuestion
-        | 'open' ID 'is' (expr ';')+ 'end' #OpenQuestion
-        | 'cole-hole' ID 'is' (expr ';')+ 'end' #ColeHoleQuestion
-        | 'cole-open' ID 'is' (expr ';')+ 'end' #ColeOpenQuestion
-        | 'code-output' ID 'is' (expr ';')+ 'end' #CodeOutputQuestion
+        'multi-choice' ID+ 'is' commandComposition 'end' #MultiChoiceQuestion
+        | 'hole' ID+ 'is' commandComposition 'end' #HoleQuestion
+        | 'open' ID+ 'is' commandComposition 'end' #OpenQuestion
+        | 'cole-hole' ID+ 'is' commandComposition 'end' #ColeHoleQuestion
+        | 'cole-open' ID+ 'is' commandComposition 'end' #ColeOpenQuestion
+        | 'code-output' ID+ 'is' commandComposition 'end' #CodeOutputQuestion
         ;
 
 declaration:
@@ -38,23 +41,42 @@ declaration:
         ;
 
 assignment:
-        ID ':=' ID #IDAssignment
-        | ID ':=' 'new' ID #NewAssignment
+        ID ':=' execution #IDAssignment
+        | ID ':=' 'new' ID+ #NewAssignment
+        | ID '->' TEXT  #HoleQuestionAssignment
         ;
 
 execution:
-        'execute' ID
+        'execute' ID+
         ;
 
 export:
-        'export' ID 'to' '"' ID '"'
+        'export' ID 'to' TEXT
         ;
 
-expr :  
-        'print' '"' ID '"' #PrintSentence
-        | 'println' '"' ID '"' #PrintLineSentence
-        | 'uses code from ' '"' ID '" end' #UsesCodeSentence
+command :  
+        'print' TEXT+ #PrintSentence
+        | 'println' (TEXT | assignment)* #PrintLineSentence
+        | 'uses code from ' TEXT ' end' #UsesCodeSentence
         ;
+
+expr:
+        ID
+        | Integer
+        | 'true'
+        | 'false'
+        | 'not' expr
+        | expr 'and' expr
+        | expr 'or' expr
+        | expr '==' expr
+        | expr '!=' expr
+        | expr '<' expr
+        | expr '<=' expr
+        | expr '>' expr
+        | expr '>=' expr
+        | '(' expr ')'
+        ;
+
 
 ifLineSentence :
     ifBlock elseifBlock* elseBlock?
@@ -71,14 +93,13 @@ elseifBlock :
 elseBlock: 
     'else'(statement)+
     ;
-
-STRING : [ a-zA-Z_1-9]+;
+    
 VERBATIMOPEN : ('"' | '\'') ('{' | '[' | '<');
 VERBATIMCLOSE : ('"' | '\'') ('}' | ']' | '<');
 PIL : VERBATIMOPEN .*? VERBATIMCLOSE; 
-ID : [a-zA-Z_]+ ;
+TEXT : '"'.+? '"';
+ID : [a-zA-Z_][a-zA-Z0-9_]* ;
 Integer : [0-9]+ ;
-Minus : '-' ;
 SKIPPING : [ \n\t]+ -> skip ;
 NEWLINE:'\r'? '\n' ;
 BLOCKCOMMENT: '#//' .*? '//#' -> skip ;

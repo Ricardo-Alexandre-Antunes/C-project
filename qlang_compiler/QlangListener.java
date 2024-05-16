@@ -17,6 +17,46 @@ public interface QlangListener extends ParseTreeListener {
 	 */
 	void exitStatList(QlangParser.StatListContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link QlangParser#statementWithBreak}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementWithBreak(QlangParser.StatementWithBreakContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link QlangParser#statementWithBreak}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementWithBreak(QlangParser.StatementWithBreakContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link QlangParser#statementComposition}.
+	 * @param ctx the parse tree
+	 */
+	void enterStatementComposition(QlangParser.StatementCompositionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link QlangParser#statementComposition}.
+	 * @param ctx the parse tree
+	 */
+	void exitStatementComposition(QlangParser.StatementCompositionContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link QlangParser#commandWithBreak}.
+	 * @param ctx the parse tree
+	 */
+	void enterCommandWithBreak(QlangParser.CommandWithBreakContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link QlangParser#commandWithBreak}.
+	 * @param ctx the parse tree
+	 */
+	void exitCommandWithBreak(QlangParser.CommandWithBreakContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link QlangParser#commandComposition}.
+	 * @param ctx the parse tree
+	 */
+	void enterCommandComposition(QlangParser.CommandCompositionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link QlangParser#commandComposition}.
+	 * @param ctx the parse tree
+	 */
+	void exitCommandComposition(QlangParser.CommandCompositionContext ctx);
+	/**
 	 * Enter a parse tree produced by the {@code StatementQuestion}
 	 * labeled alternative in {@link QlangParser#statement}.
 	 * @param ctx the parse tree
@@ -98,16 +138,6 @@ public interface QlangListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitCode(QlangParser.CodeContext ctx);
-	/**
-	 * Enter a parse tree produced by {@link QlangParser#codeBlock}.
-	 * @param ctx the parse tree
-	 */
-	void enterCodeBlock(QlangParser.CodeBlockContext ctx);
-	/**
-	 * Exit a parse tree produced by {@link QlangParser#codeBlock}.
-	 * @param ctx the parse tree
-	 */
-	void exitCodeBlock(QlangParser.CodeBlockContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code MultiChoiceQuestion}
 	 * labeled alternative in {@link QlangParser#newQuestion}.
@@ -253,6 +283,18 @@ public interface QlangListener extends ParseTreeListener {
 	 */
 	void exitNewAssignment(QlangParser.NewAssignmentContext ctx);
 	/**
+	 * Enter a parse tree produced by the {@code HoleQuestionAssignment}
+	 * labeled alternative in {@link QlangParser#assignment}.
+	 * @param ctx the parse tree
+	 */
+	void enterHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx);
+	/**
+	 * Exit a parse tree produced by the {@code HoleQuestionAssignment}
+	 * labeled alternative in {@link QlangParser#assignment}.
+	 * @param ctx the parse tree
+	 */
+	void exitHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link QlangParser#execution}.
 	 * @param ctx the parse tree
 	 */
@@ -274,40 +316,50 @@ public interface QlangListener extends ParseTreeListener {
 	void exitExport(QlangParser.ExportContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code PrintSentence}
-	 * labeled alternative in {@link QlangParser#expr}.
+	 * labeled alternative in {@link QlangParser#command}.
 	 * @param ctx the parse tree
 	 */
 	void enterPrintSentence(QlangParser.PrintSentenceContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code PrintSentence}
-	 * labeled alternative in {@link QlangParser#expr}.
+	 * labeled alternative in {@link QlangParser#command}.
 	 * @param ctx the parse tree
 	 */
 	void exitPrintSentence(QlangParser.PrintSentenceContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code PrintLineSentence}
-	 * labeled alternative in {@link QlangParser#expr}.
+	 * labeled alternative in {@link QlangParser#command}.
 	 * @param ctx the parse tree
 	 */
 	void enterPrintLineSentence(QlangParser.PrintLineSentenceContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code PrintLineSentence}
-	 * labeled alternative in {@link QlangParser#expr}.
+	 * labeled alternative in {@link QlangParser#command}.
 	 * @param ctx the parse tree
 	 */
 	void exitPrintLineSentence(QlangParser.PrintLineSentenceContext ctx);
 	/**
 	 * Enter a parse tree produced by the {@code UsesCodeSentence}
-	 * labeled alternative in {@link QlangParser#expr}.
+	 * labeled alternative in {@link QlangParser#command}.
 	 * @param ctx the parse tree
 	 */
 	void enterUsesCodeSentence(QlangParser.UsesCodeSentenceContext ctx);
 	/**
 	 * Exit a parse tree produced by the {@code UsesCodeSentence}
-	 * labeled alternative in {@link QlangParser#expr}.
+	 * labeled alternative in {@link QlangParser#command}.
 	 * @param ctx the parse tree
 	 */
 	void exitUsesCodeSentence(QlangParser.UsesCodeSentenceContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link QlangParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void enterExpr(QlangParser.ExprContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link QlangParser#expr}.
+	 * @param ctx the parse tree
+	 */
+	void exitExpr(QlangParser.ExprContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link QlangParser#ifLineSentence}.
 	 * @param ctx the parse tree
