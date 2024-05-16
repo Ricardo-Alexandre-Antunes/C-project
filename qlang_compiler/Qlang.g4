@@ -11,6 +11,8 @@ commandWithBreak: (command ';');
 
 commandComposition: commandWithBreak* (command | commandWithBreak);
 
+idset : ID | ID '.' idset;
+
 statement: 
         newQuestion     #StatementQuestion
         | declaration   #StatementDeclaration
@@ -18,40 +20,41 @@ statement:
         | execution     #StatementExecution
         | export        #StatementExport
         | code          #StatementCode
+        | command       #StatementCommand
         ;
         
 code:
-        'code' ID 'is' PIL
+        'code' idset 'is' PIL
         ;
 
 newQuestion: 
-        'multi-choice' ID+ 'is' commandComposition 'end' #MultiChoiceQuestion
-        | 'hole' ID+ 'is' commandComposition 'end' #HoleQuestion
-        | 'open' ID+ 'is' commandComposition 'end' #OpenQuestion
-        | 'cole-hole' ID+ 'is' commandComposition 'end' #ColeHoleQuestion
-        | 'cole-open' ID+ 'is' commandComposition 'end' #ColeOpenQuestion
-        | 'code-output' ID+ 'is' commandComposition 'end' #CodeOutputQuestion
+        'multi-choice' idset 'is' commandComposition 'end' #MultiChoiceQuestion
+        | 'hole' idset 'is' commandComposition 'end' #HoleQuestion
+        | 'open' idset 'is' commandComposition 'end' #OpenQuestion
+        | 'code-hole' idset 'is' commandComposition 'end' #ColeHoleQuestion
+        | 'code-open' idset 'is' commandComposition 'end' #ColeOpenQuestion
+        | 'code-output' idset 'is' commandComposition 'end' #CodeOutputQuestion
         ;
 
 declaration:
-        ID ':' 'question' #QuestionDeclaration
-        | ID ':' 'fraction' #FractionDeclaration 
-        | ID ':' 'integer' #IntegerDeclaration
-        | ID ':' 'text' #TextDeclaration
+        idset ':' 'question' #QuestionDeclaration
+        | idset ':' 'fraction' #FractionDeclaration 
+        | idset ':' 'integer' #IntegerDeclaration
+        | idset ':' 'text' #TextDeclaration
         ;
 
 assignment:
-        ID ':=' execution #IDAssignment
-        | ID ':=' 'new' ID+ #NewAssignment
-        | ID '->' TEXT  #HoleQuestionAssignment
+        idset ':=' expr #IDAssignment
+        | idset ':=' 'new' ID+ #NewAssignment
+        | idset '->' TEXT  #HoleQuestionAssignment
         ;
 
 execution:
-        'execute' ID+
+        'execute' idset
         ;
 
 export:
-        'export' ID 'to' TEXT
+        'export' idset 'to' TEXT
         ;
 
 command :  
@@ -61,7 +64,7 @@ command :
         ;
 
 expr:
-        ID
+        idset
         | Integer
         | 'true'
         | 'false'
@@ -75,6 +78,8 @@ expr:
         | expr '>' expr
         | expr '>=' expr
         | '(' expr ')'
+        | 'read' TEXT
+        | TYPES '(' expr ')'
         ;
 
 
@@ -96,6 +101,7 @@ elseBlock:
     
 VERBATIMOPEN : ('"' | '\'') ('{' | '[' | '<');
 VERBATIMCLOSE : ('"' | '\'') ('}' | ']' | '<');
+TYPES : 'integer' | 'text' | 'fraction';
 PIL : VERBATIMOPEN .*? VERBATIMCLOSE; 
 TEXT : '"'.+? '"';
 ID : [a-zA-Z_][a-zA-Z0-9_]* ;
