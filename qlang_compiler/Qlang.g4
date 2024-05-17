@@ -24,7 +24,7 @@ statement:
         ;
         
 code:
-        'code' idset 'is' PIL
+        'code' idset 'is' PIL 'end'
         ;
 
 newQuestion: 
@@ -41,16 +41,17 @@ declaration:
         | idset ':' 'fraction' #FractionDeclaration 
         | idset ':' 'integer' #IntegerDeclaration
         | idset ':' 'text' #TextDeclaration
+        | idset ':' 'code' #CodeDeclaration
         ;
 
 assignment:
-        idset ':=' expr #IDAssignment
-        | idset ':=' 'new' ID+ #NewAssignment
+        idset ':=' (expr | execution | TEXT)* #IDAssignment
+        | idset ':=' 'new' idset #NewAssignment
         | idset '->' TEXT  #HoleQuestionAssignment
         ;
 
 execution:
-        'execute' idset
+        'execute' ('new')? idset
         ;
 
 export:
@@ -58,10 +59,17 @@ export:
         ;
 
 command :  
-        'print' TEXT+ #PrintSentence
-        | 'println' (TEXT | assignment)* #PrintLineSentence
+        'print' (assignment | expr)* #PrintSentence
+        | 'println' (assignment | expr)* #PrintLineSentence
         | 'uses code from ' TEXT ' end' #UsesCodeSentence
+        | 'uses code' idset codeholeComposition 'end' #UsesCodeDefined
         ;
+
+codeholeComposition: codeholeWithBreak* (codehole | codeholeWithBreak);
+
+codeholeWithBreak: (codehole ';');
+
+codehole: (Integer ',')? (Integer ',')? TEXT ('line' Integer)?;
 
 expr:
         idset
@@ -69,8 +77,8 @@ expr:
         | 'true'
         | 'false'
         | 'not' expr
-        | expr 'and' expr
-        | expr 'or' expr
+        | expr and=('and' | '&&') (expr | execution)
+        | expr or=('or' | '|') (expr | execution)
         | expr '==' expr
         | expr '!=' expr
         | expr '<' expr
@@ -79,7 +87,8 @@ expr:
         | expr '>=' expr
         | '(' expr ')'
         | 'read' TEXT
-        | TYPES '(' expr ')'
+        | TEXT
+        | type=('integer' | 'text' | 'fraction')'(' expr ')'
         ;
 
 
@@ -99,11 +108,15 @@ elseBlock:
     'else'(statement)+
     ;
     
-VERBATIMOPEN : ('"' | '\'') ('{' | '[' | '<');
-VERBATIMCLOSE : ('"' | '\'') ('}' | ']' | '<');
-TYPES : 'integer' | 'text' | 'fraction';
-PIL : VERBATIMOPEN .*? VERBATIMCLOSE; 
-TEXT : '"'.+? '"';
+
+ 
+QUOTES : '"' | '\'';
+OPEN_BRACKETS: '{' | '[' | '(' ;
+CLOSE_BRACKETS: '}' | ']' | ')' ;
+VERBATIMOPEN : QUOTES OPEN_BRACKETS;
+VERBATIMCLOSE : CLOSE_BRACKETS QUOTES;
+PIL : VERBATIMOPEN .*? VERBATIMCLOSE;
+TEXT : QUOTES .*?  QUOTES;
 ID : [a-zA-Z_][a-zA-Z0-9_]* ;
 Integer : [0-9]+ ;
 SKIPPING : [ \n\t]+ -> skip ;
