@@ -14,14 +14,14 @@ commandComposition: commandWithBreak* (command | commandWithBreak);
 idset : ID | ID '.' idset;
 
 statement: 
-        newQuestion     #StatementQuestion
-        | declaration   #StatementDeclaration
-        | assignment    #StatemtentAssignment
-        | execution     #StatementExecution
-        | export        #StatementExport
-        | code          #StatementCode
-        | command       #StatementCommand
-        | ifLineSentence #StatementIfLineSentence
+        newQuestion             #StatementQuestion
+        | declaration           #StatementDeclaration
+        | assignment            #StatemtentAssignment
+        | execution             #StatementExecution
+        | export                #StatementExport
+        | code                  #StatementCode
+        | command               #StatementCommand
+        | ifLineSentence        #StatementIfLineSentence
         ;
         
 code:
@@ -47,18 +47,18 @@ declaration:
         ;
 
 assignment:
-        idset ':=' (expr | execution | TEXT)* #IDAssignment
+        idset ':=' expr #IDAssignment
         | idset ':=' 'new' idset #NewAssignment
-        | idset '->' TEXT  #HoleQuestionAssignment
+        | idset '->' expr  #HoleQuestionAssignment
         ;
 
 execution:
-        'execute' (Integer('/'Integer)?',')? ('new')? idset
+        'execute' (expr',')? ('new')? idset
         ;
 
 
 export:
-        'export' idset 'to' TEXT
+        'export' idset 'to' expr
         ;
 
 command :  
@@ -66,7 +66,7 @@ command :
         | 'println' ((assignment | expr) ('|program')?)* #PrintLineSentence
         | 'uses code from' TEXT codeholeComposition? 'end' #UsesCodeSentence
         | 'uses code' idset codeholeComposition? 'end' #UsesCodeDefined
-        | 'choice' (Integer'/'Integer',')? TEXT 'end' #ChoiceCommand
+        | 'choice' (expr',')? TEXT 'end' #ChoiceCommand
         | execution #ExecutionCommand
         | ifLineSentence #IfLineSentenceCommand
         | assignment #AssignmentCommand
@@ -80,23 +80,26 @@ codeholeWithBreak: (codehole ';');
 codehole: (Integer ',')? (Integer ',')? (TEXT | idset) ('line' Integer)?;
 
 expr:
-        idset
-        | Integer
-        | 'true'
-        | 'false'
-        | 'not' expr
-        | expr and=('and' | '&&') (expr | execution)
-        | expr or=('or' | '|') (expr | execution)
-        | expr '=' expr
-        | expr '!=' expr
-        | expr '<' expr
-        | expr '<=' expr
-        | expr '>' expr
-        | expr '>=' expr
-        | '(' expr ')'
-        | 'read' TEXT
-        | TEXT
-        | type=('integer' | 'text' | 'fraction')'(' expr ')'
+        idset                                                   #IDExpr
+        | Integer(('/'Integer)?)                                #ValueExpr
+        | 'not' expr                                            #NotExpr                            
+        | expr '&&' expr                                        #AndExpr
+        | expr '|' expr                                         #OrExpr
+        | expr '=' expr                                         #EqualExpr
+        | expr '!=' expr                                        #NotEqualExpr
+        | expr '<' expr                                         #LessExpr
+        | expr '<=' expr                                        #LessEqualExpr
+        | expr '>' expr                                         #GreaterExpr
+        | expr '>=' expr                                        #GreaterEqualExpr
+        | expr '+' expr                                         #PlusExpr
+        | expr '-' expr                                         #MinusExpr
+        | expr '*' expr                                         #MultExpr
+        | expr '/' expr                                         #DivExpr
+        | '(' expr ')'                                          #ParenthesisExpr  
+        | 'read' TEXT                                           #ReadExpr  
+        | TEXT                                                  #TextExpr                         
+        | type=('integer' | 'text' | 'fraction')'(' expr ')'    #TypeExpr
+        | execution                                             #ExecutionExpr
         ;
 
 
