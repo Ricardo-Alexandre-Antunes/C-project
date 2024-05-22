@@ -21,10 +21,11 @@ statement:
         | export        #StatementExport
         | code          #StatementCode
         | command       #StatementCommand
+        | ifLineSentence #StatementIfLineSentence
         ;
         
 code:
-        'code' idset 'is' PIL 'end'
+        'code' idset 'is' (PIL assignment?)+ 'end'
         ;
 
 newQuestion: 
@@ -34,6 +35,7 @@ newQuestion:
         | 'code-hole' idset 'is' commandComposition 'end' #ColeHoleQuestion
         | 'code-open' idset 'is' commandComposition 'end' #ColeOpenQuestion
         | 'code-output' idset 'is' commandComposition 'end' #CodeOutputQuestion
+        | 'composed' idset 'is' commandComposition 'end' #ComposedQuestion
         ;
 
 declaration:
@@ -51,8 +53,9 @@ assignment:
         ;
 
 execution:
-        'execute' ('new')? idset
+        'execute' (Integer('/'Integer)?',')? ('new')? idset
         ;
+
 
 export:
         'export' idset 'to' TEXT
@@ -60,16 +63,21 @@ export:
 
 command :  
         'print' (assignment | expr)* #PrintSentence
-        | 'println' (assignment | expr)* #PrintLineSentence
-        | 'uses code from ' TEXT ' end' #UsesCodeSentence
-        | 'uses code' idset codeholeComposition 'end' #UsesCodeDefined
+        | 'println' ((assignment | expr) ('|program')?)* #PrintLineSentence
+        | 'uses code from' TEXT codeholeComposition? 'end' #UsesCodeSentence
+        | 'uses code' idset codeholeComposition? 'end' #UsesCodeDefined
+        | 'choice' (Integer'/'Integer',')? TEXT 'end' #ChoiceCommand
+        | execution #ExecutionCommand
+        | ifLineSentence #IfLineSentenceCommand
+        | assignment #AssignmentCommand
+        | declaration #DeclarationCommand
         ;
 
 codeholeComposition: codeholeWithBreak* (codehole | codeholeWithBreak);
 
 codeholeWithBreak: (codehole ';');
 
-codehole: (Integer ',')? (Integer ',')? TEXT ('line' Integer)?;
+codehole: (Integer ',')? (Integer ',')? (TEXT | idset) ('line' Integer)?;
 
 expr:
         idset
@@ -79,7 +87,7 @@ expr:
         | 'not' expr
         | expr and=('and' | '&&') (expr | execution)
         | expr or=('or' | '|') (expr | execution)
-        | expr '==' expr
+        | expr '=' expr
         | expr '!=' expr
         | expr '<' expr
         | expr '<=' expr
@@ -93,7 +101,7 @@ expr:
 
 
 ifLineSentence :
-    ifBlock elseifBlock* elseBlock?
+    ifBlock elseifBlock* elseBlock? 'end'
     ;
 
 ifBlock : 
@@ -111,8 +119,8 @@ elseBlock:
 
  
 QUOTES : '"' | '\'';
-OPEN_BRACKETS: '{' | '[' | '(' ;
-CLOSE_BRACKETS: '}' | ']' | ')' ;
+OPEN_BRACKETS: '{' | '[' | '(' | '<' ;
+CLOSE_BRACKETS: '}' | ']' | ')' | '>' ;
 VERBATIMOPEN : QUOTES OPEN_BRACKETS;
 VERBATIMCLOSE : CLOSE_BRACKETS QUOTES;
 PIL : VERBATIMOPEN .*? VERBATIMCLOSE;
