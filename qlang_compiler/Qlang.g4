@@ -118,42 +118,15 @@ elseBlock:
     
 
  
-QUOTES : '"' | '\'';
 OPEN_BRACKETS: '{' | '[' | '(' | '<' ;
 CLOSE_BRACKETS: '}' | ']' | ')' | '>' ;
-VERBATIMOPEN : QUOTES OPEN_BRACKETS;
-VERBATIMCLOSE : CLOSE_BRACKETS QUOTES;
-PIL : VERBATIMOPEN .*? VERBATIMCLOSE;
-TEXT : QUOTES .*?  QUOTES;
+VERBATIMOPEN : OPEN_BRACKETS;
+VERBATIMCLOSE : CLOSE_BRACKETS;
+PIL : '"' VERBATIMOPEN .*? VERBATIMCLOSE '"' | '\'' VERBATIMOPEN .*? VERBATIMCLOSE '\'';
+TEXT : '"' .*?  '"' | '\'' .*? '\'';
 ID : [a-zA-Z_][a-zA-Z0-9_]* ;
 Integer : [0-9]+ ;
 SKIPPING : [ \n\t]+ -> skip ;
 NEWLINE:'\r'? '\n' ;
 BLOCKCOMMENT: '#//' .*? '//#' -> skip ;
 SINGLECOMMENT: '#' .*? '\n' -> skip ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
