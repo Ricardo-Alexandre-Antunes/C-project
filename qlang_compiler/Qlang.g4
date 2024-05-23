@@ -11,7 +11,9 @@ commandWithBreak: (command ';');
 
 commandComposition: commandWithBreak* (command | commandWithBreak);
 
-idset : ID | ID '.' idset;
+idset : ID                      #IDSetTerminal
+        | ID '.' idset          #IDSetComposition
+        ;         
 
 statement: 
         newQuestion             #StatementQuestion
@@ -23,27 +25,19 @@ statement:
         | command               #StatementCommand
         | ifLineSentence        #StatementIfLineSentence
         ;
-        
-code:
-        'code' idset 'is' (PIL assignment?)+ 'end'
-        ;
+
+
 
 newQuestion: 
-        'multi-choice' idset 'is' commandComposition 'end' #MultiChoiceQuestion
-        | 'hole' idset 'is' commandComposition 'end' #HoleQuestion
-        | 'open' idset 'is' commandComposition 'end' #OpenQuestion
-        | 'code-hole' idset 'is' commandComposition 'end' #ColeHoleQuestion
-        | 'code-open' idset 'is' commandComposition 'end' #ColeOpenQuestion
-        | 'code-output' idset 'is' commandComposition 'end' #CodeOutputQuestion
-        | 'composed' idset 'is' commandComposition 'end' #ComposedQuestion
+        QUESTIONTYPES idset 'is' commandComposition 'end'
         ;
 
 declaration:
-        idset ':' 'question' #QuestionDeclaration
-        | idset ':' 'fraction' #FractionDeclaration 
-        | idset ':' 'integer' #IntegerDeclaration
-        | idset ':' 'text' #TextDeclaration
-        | idset ':' 'code' #CodeDeclaration
+        idset ':' (VARIABLETYPES | 'code')
+        ;
+
+code:
+        'code' idset 'is' (PIL assignment?)+ 'end'
         ;
 
 assignment:
@@ -80,26 +74,19 @@ codeholeWithBreak: (codehole ';');
 codehole: (Integer ',')? (Integer ',')? (TEXT | idset) ('line' Integer)?;
 
 expr:
-        idset                                                   #IDExpr
-        | Integer(('/'Integer)?)                                #ValueExpr
-        | 'not' expr                                            #NotExpr                            
-        | expr '&&' expr                                        #AndExpr
-        | expr '|' expr                                         #OrExpr
-        | expr '=' expr                                         #EqualExpr
-        | expr '!=' expr                                        #NotEqualExpr
-        | expr '<' expr                                         #LessExpr
-        | expr '<=' expr                                        #LessEqualExpr
-        | expr '>' expr                                         #GreaterExpr
-        | expr '>=' expr                                        #GreaterEqualExpr
-        | expr '+' expr                                         #PlusExpr
-        | expr '-' expr                                         #MinusExpr
-        | expr '*' expr                                         #MultExpr
-        | expr '/' expr                                         #DivExpr
-        | '(' expr ')'                                          #ParenthesisExpr  
-        | 'read' TEXT                                           #ReadExpr  
-        | TEXT                                                  #TextExpr                         
-        | type=('integer' | 'text' | 'fraction')'(' expr ')'    #TypeExpr
-        | execution                                             #ExecutionExpr
+        '(' expr ')'                                                                            #ParenthesisExpr  
+        | expr '|' expr                                                                         #StdoutExpr
+        | op=('-' | '+' | 'not') expr                                                           #UnaryExpr
+        | expr op=('*' | ':' | '%') expr                                                        #ExprMultDivMod
+        | expr op=('+' | '-') expr                                                              #ExprAddMinus
+        | expr op=('=' | '>=' | '<=' | '>' | '<' | '/=') expr                                   #ExprBinaryRelational
+        | expr op=('and' | 'or' | 'xor' | 'implies' | ANDTHEN | ORELSE ) expr                   #ExprBinaryLogical
+        | Integer(('/'Integer)?)                                                                #ValueExpr
+        | idset                                                                                 #IDExpr 
+        | TEXT                                                                                  #TextExpr                         
+        | VARIABLETYPES '(' expr ')'                                                            #TypeExpr
+        | 'read' TEXT                                                                           #ReadExpr 
+        | execution                                                                             #ExecutionExpr
         ;
 
 
@@ -120,7 +107,10 @@ elseBlock:
     ;
     
 
- 
+QUESTIONTYPES : 'multi-choice' | 'hole' | 'open' | 'code-hole' | 'code-open' | 'code-output' | 'composed';
+VARIABLETYPES : 'integer' | 'real' | 'text' | 'question' | 'fraction' ;
+ANDTHEN: 'and then';
+ORELSE: 'or else';
 OPEN_BRACKETS: '{' | '[' | '(' | '<' ;
 CLOSE_BRACKETS: '}' | ']' | ')' | '>' ;
 VERBATIMOPEN : OPEN_BRACKETS;
@@ -133,3 +123,5 @@ SKIPPING : [ \n\t]+ -> skip ;
 NEWLINE:'\r'? '\n' ;
 BLOCKCOMMENT: '#//' .*? '//#' -> skip ;
 SINGLECOMMENT: '#' .*? '\n' -> skip ;
+
+ERROR: . ;

@@ -14,6 +14,7 @@ g: fraction; # fraction type variable (an integer fraction)
 
 # define a question (no execution involved)
 # question types: multi-choice, hole, open, code-hole, code-open, code-output
+
 hole Question.q1 is
   println "A atribuição de valor em PIL usa o operador " ans->":=" "."
   # the text preceded with a label (ans in this example) is omitted from the user
@@ -32,14 +33,15 @@ end; # manual grading
 q := new OpenQuestion;
 execute q; # execute question stored in variable q (result would be: undefined)
 
+
 code-open Question.Code1 is
    uses code from "even-odd.pil" end;
    println "Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).";
 end; # automatic grading
+
 
 q := new Question.Code1;
 g := execute q; # execute question stored in variable q
 
 export result to "result.txt"; # export (to a file) current questionnaire results
 # export command can be executed anywhere!
-
