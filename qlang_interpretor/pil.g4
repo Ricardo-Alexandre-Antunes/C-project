@@ -8,8 +8,7 @@ statementWithBreak: statement ';' ;
 
 statement: (assignment | write | if | loop ) ;
 
-if: 'if' expr 'then' statementComposition 'end'                                 #IfSimple
-  | 'if' expr 'then' statementComposition 'else' statementComposition 'end'     #IfElse
+if: 'if' expr 'then' statementComposition ('else' elseStat=statementComposition)? 'end'         #If
   ; 
 
 loop: 'loop' statementWithBreak* ('until' expr | 'while' expr) 'do' statementComposition 'end'  #LoopFull
