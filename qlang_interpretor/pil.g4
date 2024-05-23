@@ -22,25 +22,25 @@ write:  'writeln' (expr ',')* expr  #WritelnExpr
 
 assignment:  idset ':=' expr ;
 
-expr: '(' expr ')'                                          #ExprParenthesis
-    | op=('-' | '+' | 'not') expr                           #ExprUnary
-    | expr op=('*' | ':' | '%') expr                        #ExprMultDiv
-    | expr op=('+' | '-') expr                              #ExprAddMinus
-    | expr op=('=' | '>=' | '<=' | '>' | '<' | '/=') expr   #ExprBinaryRelational
-    | expr op=('and' | 'or' | 'xor' | 'implies') expr       #ExprBinaryLogical
-    | expr 'and then' expr                                  #ExprAndThen   
-    | expr 'or else' expr                                   #ExprOrElse
-    | INTEGER                                               #ExprInteger                                
-    | FLOAT                                                 #ExprFloat               
-    | idset                                                 #ExprId                           
-    | TEXT                                                  #ExprText                                 
-    | TYPES '(' expr ')'                                    #ExprTypeConversion
-    | 'read' expr                                           #ExprRead                                  
+expr: '(' expr ')'                                                              #ExprParenthesis
+    | op=('-' | '+' | 'not') expr                                               #ExprUnary
+    | expr op=('*' | ':' | '%') expr                                            #ExprMultDivMod
+    | expr op=('+' | '-') expr                                                  #ExprAddMinus
+    | expr op=('=' | '>=' | '<=' | '>' | '<' | '/=') expr                       #ExprBinaryRelational
+    | expr op=('and' | 'or' | 'xor' | 'implies' | ANDTHEN | ORELSE ) expr       #ExprBinaryLogical
+    | INTEGER                                                                   #ExprInteger                                
+    | FLOAT                                                                     #ExprFloat               
+    | idset                                                                     #ExprId                           
+    | TEXT                                                                      #ExprText                                 
+    | type=TYPES '(' expr ')'                                                   #ExprTypeConversion
+    | 'read' expr                                                               #ExprRead                                  
     ;
 
 idset: ID | ID '.' idset ;  
 
 TYPES: 'integer' | 'real' | 'text' ;
+ANDTHEN: 'and' 'then' ;
+ORELSE: 'or' 'else' ;
 TEXT : '"'.+? '"' ;
 INTEGER : [0-9]+ ;
 FLOAT : [0-9]+ '.' [0-9]+ ;
