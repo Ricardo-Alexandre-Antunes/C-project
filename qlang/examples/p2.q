@@ -10,19 +10,19 @@ println "Nome: " name ", id: " text(id); # text concatenation!
 code PIL.Example1 is # default is code of PIL type (the only one to be implemented)
 "[
    -- PIL code from here
-   n := integer(read);
-   i := 1;
-   loop until i = n do
-      if i % 2 = 0 then
-         write i
-      end;
-      i := i + 1
-   end
+   n := integer(read "Number: "); -- type conversion: type(expression)
+   write "Number ",n, " is ";
+   if n % 2 = 0 then -- = is the comparison operator (as in math)
+      writeln "even"
+   else
+      writeln "odd"
+   end;
    -- PIL code to here
 ]"
 end;
 
 c: code; # code type variable
+
 c := new PIL.Example1;
 res: text;
 res := execute c1; # standard output stored in res
@@ -30,7 +30,6 @@ res := "10" | execute c1; # uses "10" as standard input
 execute c1; # output goes to standard output
 
 # code execution outside a question has no impact on questionnaire grading
-
 code-hole Algorithm.Code1 is
    println "Complete o seguinte código.";
    uses code PIL.Example1
@@ -39,8 +38,6 @@ code-hole Algorithm.Code1 is
       # syntax (comma separated): [grade] [match-count] text
    end;
 end; # total points defined in question: 10+5=15, final grade: sum-correct-points / total-points
-
 execute new Algorithm.Code1;
 
 export result to "result-p2.txt";
-
