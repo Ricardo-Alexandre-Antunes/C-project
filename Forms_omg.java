@@ -12,11 +12,14 @@ import java.util.stream.Collectors;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import java.util.ArrayList;
+
 class Forms {
     static class Result {
         private String name;
         private int id;
         private Fraction grade;
+        private Fraction trueGrade;
 
         public Result(String name, int id) {
             this.name = name;
@@ -32,7 +35,7 @@ class Forms {
 
         public void updateGrade(Fraction result, Fraction weight) {
             if (result != null && grade != null) {
-                Fraction trueGrade = Fraction.divideFractions(weight, result);
+                this.trueGrade = Fraction.divideFractions(weight, result);
                 this.grade = Fraction.addFractions(this.grade, this.trueGrade);
             } else {
                 this.grade = null;
@@ -42,7 +45,7 @@ class Forms {
         public void updateGrade(Fraction result) {
             if (result != null && grade != null) {
                 Fraction weight = new Fraction(1, 1);
-                Fraction trueGrade = Fraction.divideFractions(weight, result);
+                this.trueGrade = Fraction.divideFractions(weight, result);
                 this.grade = Fraction.addFractions(this.grade, this.trueGrade);
             } else {
                 this.grade = null;
@@ -50,7 +53,7 @@ class Forms {
         }
 
         public void resetGrade() {
-            grade = new Fraction(0, 0);
+            this.grade = new Fraction(0, 0);
         }
 
         public String getName() {
@@ -67,7 +70,7 @@ class Forms {
 
         public void exportToFile(BufferedWriter w) {
             try (w) {
-                writer.write("Grade: " + this.grade + "\n");
+                w.write("Grade: " + this.grade + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -165,7 +168,7 @@ class Forms {
             int fakeDenominator = this.denominator;
             while (fakeNumerator != fakeDenominator) {
                 if (fakeNumerator > fakeDenominator) {
-                    fakeNumerator = fakeNumerator - fakedenominator;
+                    fakeNumerator = fakeNumerator - fakeDenominator;
                 } else {
                     fakeDenominator = fakeDenominator - fakeNumerator;
                 }
@@ -175,23 +178,33 @@ class Forms {
 
         @Override
         public String toString() {
-            if (this.x == null) {
+            if (this.numerator == null) {
                 return "Undefined";
             }
-            if (this.y == 0) {
+            if (this.denominator == 0) {
                 return "Invalid Fraction (division by zero)";
             }
-            return ((double) this.x / this.y) * 100 + "%";
+            return ((double) this.numerator / this.denominator) * 100 + "%";
         }
     }
 
     public interface QuestionInterface {
-        public int execute(Scanner sc);
+        public Fraction execute(Scanner sc);
     }
 
     abstract static class Question implements QuestionInterface {
-        abstract String getQuestion();
+        private Result result;
 
+        public Question(Result result){
+            this.result = result;
+        }
+
+        public Result getResult(){
+            return this.result;
+        }
+
+        abstract String getQuestion();
+        abstract String getAnswer();
         abstract int getQuestionId();
     }
 
@@ -202,9 +215,9 @@ class Forms {
             questionList = new ArrayList<QuestionInterface>();
         }
 
-        public int execute(Scanner sc) {
-            int randomQuestion = Math.random() * questionList.size();
-            questionList.get(randomQuestion).execute(sc);
+        public Fraction execute(Scanner sc) {
+            int randomQuestion = (int)(Math.random() * questionList.size());
+            return questionList.get(randomQuestion).execute(sc);
         }
     }
 
@@ -213,17 +226,30 @@ class Forms {
         String[] solution;
         String[] answer;
         int id;
-        int result;
+        Fraction score;
 
-        public HoleQuestion(String[] question, String[] solution) {
+        public HoleQuestion(Result result, String[] question, String[] solution) {
+            super(result);
             this.question = question;
             this.solution = solution;
             this.answer = new String[solution.length];
             this.id = 0;
+            this.score = new Fraction(0,0);
+        }
+
+        private Fraction rightAnswer(){
+            this.score.setNumerator(this.score.getNumerator() + 1);
+            this.score.setDenominator(this.score.getDenominator() + 1);
+            return this.score;
+        }
+
+        private Fraction wrongAnswer(){
+            this.score.setDenominator(this.score.getDenominator() + 1);
+            return this.score;
         }
 
         @Override
-        public int execute(Scanner scanner) {
+        public Fraction execute(Scanner scanner) {
             System.out.println(question.length);
             for (int i = 0; i < question.length; i++) {
                 System.out.print(question[i]);
@@ -233,9 +259,10 @@ class Forms {
             }
             for (int i = 0; i < answer.length; i++) {
                 System.out.print((i + 1) + " - ");
-                answer[i] = scanner.nextLine();
+                this.answer[i] = scanner.nextLine();
             }
-            return answer.equals(solution) ? 1 : -1;
+            this.getResult().updateGrade(this.score);
+            return this.answer.equals(this.solution) ?  rightAnswer() : wrongAnswer();
         }
 
         @Override
@@ -276,14 +303,15 @@ class Forms {
         int id;
         Scanner sc;
 
-        public OpenQuestion(String question) {
+        public OpenQuestion(Result result, String question) {
+            super(result);
             this.question = question;
             this.answer = "";
             this.id = 0;
         }
 
         @Override
-        public int execute(Scanner scanner) {
+        public Fraction execute(Scanner scanner) {
             StringBuilder sb = new StringBuilder();
 
             System.out.println("Answer the following question:");
@@ -300,7 +328,8 @@ class Forms {
             }
 
             answer = sb.toString();
-            return 0;
+            this.getResult().updateGrade(null);
+            return null;
         }
 
         @Override
@@ -312,24 +341,54 @@ class Forms {
         public String getQuestion() {
             return "";
         }
+
+        @Override 
+        public String getAnswer() {
+            return this.answer;
+        }
+    }
+
+    public static class Code{
+        
+        private String code;
+
+        public Code(String code){
+            this.code = code;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public void setCode(String code) {
+            this.code = code;
+        }
+
     }
 
     public static class CodeOpenQuestion extends Question {
         private String question;
-        private String answer;
+        private Code answer;
         private int id;
         private String solutionFile;
         private String inputFilePath;
+        private Fraction score;
 
         // Constructor to initialize the CodeOpenQuestion with a question and
         // solutionFile.
-        public CodeOpenQuestion(String question, String solutionFile) {
+        public CodeOpenQuestion(Result result, String question, String solutionFile) {
+            super(result);
             this.question = question;
             this.solutionFile = solutionFile;
-            this.answer = "";
+            this.answer = new Code("");
             this.id = 0;
             this.inputFilePath = "CodeOpenQuestionInputFile.txt";
+            this.score = new Fraction(0, 0);
             createInputFile();
+        }
+
+        public String getAnswer(){
+            return this.answer.getCode();
         }
 
         // Method to create the input file
@@ -345,15 +404,17 @@ class Forms {
                 System.out.println("An error occurred while creating the input file.");
                 e.printStackTrace();
             }
+            
         }
 
         // Executes the question prompt, reads the user's submitted file, and compares
         // it to the solution.
         @Override
-        public int execute(Scanner scanner) {
+        public Fraction execute(Scanner scanner) {
+            System.out.println();
             System.out.println(question);
             System.out.println("Please write your code in the file: " + inputFilePath);
-            System.out.println("Once you have completed, type 'SUBMIT' to submit your code.");
+            System.out.println("Once you have completed, type 'SUBMIT' to submit your code.\n");
 
             while (true) {
                 System.out.print("Command: ");
@@ -373,22 +434,27 @@ class Forms {
                 String solutionCode = new String(Files.readAllBytes(Paths.get(solutionFile)));
 
                 // Store the user's answer
-                answer = userCode.strip();
+                answer = new Code(userCode.strip());
 
                 String code_solution = solutionCode.strip();
 
                 // Compare the user's code with the solution code
-                if (this.answer.equals(code_solution)) {
+                if (code_solution.equals(this.answer.getCode())) {
                     System.out.println("Your code matches the solution!");
-                    return 1; // Success
+                    Files.deleteIfExists(Paths.get(inputFilePath));
+                    this.score.setNumerator(this.score.getNumerator() + 1);
+                    return this.score; // Success
                 } else {
                     System.out.println("Your code does not match the solution. Please try again.");
-                    return 0; // Failure
+                    Files.deleteIfExists(Paths.get(inputFilePath));
                 }
+
+                this.score.setDenominator(this.score.getDenominator() + 1);
+                return this.score;
 
             } catch (IOException e) {
                 System.out.println("Error reading the files: " + e.getMessage());
-                return -1; // Error
+                return this.score; // Error
             }
         }
 
