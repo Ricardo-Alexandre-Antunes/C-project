@@ -25,6 +25,8 @@ class Forms {
         }
 
         public Result() {
+            this.name = "";
+            this.id = -1;
             this.grade = new Fraction(0, 0);
         }
 
@@ -44,12 +46,10 @@ class Forms {
             return grade;
         }
 
-        public void exportToFile(String filename) {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-                writer.write("Grade: " + grade + "\n");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        public void exportToFile(String fileName) {
+            File exportFile = new File(fileName);
+            PrintStream filePrinter = new PrintStream(exportFile);
+            filePrinter.print("Grade: " + this.grade + "\n");
         }
 
     }
@@ -64,6 +64,9 @@ class Forms {
         }
 
         public void updateGrade(int x) {
+            if (this.x == null) {
+                return;
+            }
             if (x == -1) {
                 this.y++;
             } else if (x == 0) {
@@ -297,34 +300,28 @@ class Forms {
         String filename = "result.txt";
         result.name = "User Name"; // Placeholder for user name
         result.id = 1; // Placeholder for user ID
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+        writer.write("Name: " + result.name + "\n");
+        writer.write("ID: " + result.id + "\n");
 
-            writer.write("Name: " + result.name + "\n");
-            writer.write("ID: " + result.id + "\n");
+        // Question 1
+        String[] question = { "A atribuição de valor em PIL usa o operador ", "." };
+        String[] answer = { ":=" }; // Placeholder para respostas
+        HoleQuestion q1 = new HoleQuestion(question, answer);
+        int a = q1.execute(scanner);
+        result.updateGrade(a);
+        result.exportToFile(writer);
 
-            // Question 1
-            String[] question = { "A atribuição de valor em PIL usa o operador ", "." };
-            String[] answer = { ":=" }; // Placeholder para respostas
-            HoleQuestion q1 = new HoleQuestion(question, answer);
-            int a = q1.execute(scanner);
-            result.updateGrade(a);
-            result.exportToFile(filename);
+        // Open Question
+        OpenQuestion q2 = new OpenQuestion("Defina a estrutura de dados lista ligada.");
+        result.updateGrade(q2.execute(scanner));
+        result.exportToFile(writer);
 
-            // Open Question
-            OpenQuestion q2 = new OpenQuestion("Defina a estrutura de dados lista ligada.");
-            result.updateGrade(q2.execute(scanner));
-            result.exportToFile(filename);
-
-            // CodeOpenQuestion
-            String even_odd_question = "Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).";
-            String codeOpen_file_name = "codeOpenTestFile.txt";
-            CodeOpenQuestion q3 = new CodeOpenQuestion(even_odd_question, codeOpen_file_name);
-            result.updateGrade(q3.execute(scanner));
-            result.exportToFile(filename);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        // CodeOpenQuestion
+        String even_odd_question = "Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).";
+        String codeOpen_file_name = "codeOpenTestFile.txt";
+        CodeOpenQuestion q3 = new CodeOpenQuestion(even_odd_question, codeOpen_file_name);
+        result.updateGrade(q3.execute(scanner));
+        result.exportToFile(codeOpen_file_name);
 
         scanner.close();
     }
