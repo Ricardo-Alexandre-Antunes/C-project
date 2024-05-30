@@ -1,12 +1,11 @@
 import java.util.Scanner;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.io.BufferedReader;
 import java.util.ArrayList;
 
 class Forms {
@@ -14,12 +13,18 @@ class Forms {
         private String name;
         private int id;
         private Fraction grade;
-        private Fraction trueGrade;
+        private ArrayList<String> questions;
+        private ArrayList<String> answers;
+        private ArrayList<Fraction> grades;
 
+        
         public Result(String name, int id) {
             this.name = name;
             this.id = id;
             this.grade = new Fraction(0, 1); // Initialize with a valid fraction
+            this.questions = new ArrayList<String>();
+            this.answers = new ArrayList<String>();
+            this.grades = new ArrayList<Fraction>();
         }
 
         public Result() {
@@ -29,8 +34,14 @@ class Forms {
         }
 
         public void updateGrade(Fraction result) {
-            if (result != null) {
-                this.grade = Fraction.addFractions(this.grade, result);
+            if (result != null && this.grade != null) {
+                result = Fraction.simplifyFraction(result);
+                System.out.println("Question grade: " + result);
+                this.grade.setNumerator(this.grade.getNumerator() + result.getNumerator());
+                this.grade.setDenominator(this.grade.getDenominator() + result.getDenominator());
+            }
+            else{
+                this.grade = null;
             }
         }
 
@@ -73,11 +84,13 @@ class Forms {
         }
 
         public void exportToFile(BufferedWriter w) {
+            //System.out.println(this.grade.getNumerator() + "/" + this.grade.getDenominator());
             try {
-                w.write("Grade: " + this.grade + "\n");
+                w.write("Grade: " + ((this.grade == null) ? "Undefined" : this.grade)  + "\n");
             } catch (IOException e) {
                 e.printStackTrace();
             }
+            System.out.println("Quizz completed. Check your result in result.txt");
         }
     }
 
@@ -88,7 +101,6 @@ class Forms {
         public Fraction(int numerator, int denominator) {
             this.numerator = numerator;
             this.denominator = denominator;
-            simplifyFraction();
         }
 
         public Integer getNumerator() {
@@ -97,7 +109,6 @@ class Forms {
 
         public void setNumerator(Integer numerator) {
             this.numerator = numerator;
-            simplifyFraction();
         }
 
         public Integer getDenominator() {
@@ -106,7 +117,6 @@ class Forms {
 
         public void setDenominator(Integer denominator) {
             this.denominator = denominator;
-            simplifyFraction();
         }
 
         public static Fraction addFractions(Fraction fraction1, Fraction fraction2) {
@@ -133,25 +143,22 @@ class Forms {
             return new Fraction(newNumerator, newDenominator);
         }
 
-        public void simplifyFraction() {
-            int gcd = gcd(this.numerator, this.denominator);
-            this.numerator /= gcd;
-            this.denominator /= gcd;
+        public static Fraction simplifyFraction(Fraction fraction) {
+            int gcd = 1;
+            int smaller = Math.min(Math.abs(fraction.numerator), Math.abs(fraction.denominator));
+            for (int i = 2; i <= smaller; i++) {
+                if (fraction.numerator % i == 0 && fraction.denominator % i == 0) {
+                    gcd = i;
+                }
+            }
+            return new Fraction(fraction.numerator / gcd, fraction.denominator / gcd);
         }
 
-        private int gcd(int a, int b) {
-            while (b != 0) {
-                int temp = b;
-                b = a % b;
-                a = temp;
-            }
-            return a;
-        }
 
         @Override
         public String toString() {
             if (this.denominator == 0) {
-                return "Invalid Fraction (division by zero)";
+                return "null";
             }
             return ((double) this.numerator / this.denominator) * 100 + "%";
         }
@@ -192,7 +199,7 @@ class Forms {
             this.solution = solution;
             this.answer = new String[solution.length];
             this.id = 0;
-            this.score = new Fraction(0, 1); // Initialize with a valid fraction
+            this.score = new Fraction(0, this.solution.length); // Initialize with a valid fraction
         }
 
         private Fraction rightAnswer() {
@@ -201,7 +208,6 @@ class Forms {
         }
 
         private Fraction wrongAnswer() {
-            this.score.setDenominator(this.score.getDenominator() + 1);
             return this.score;
         }
 
@@ -365,14 +371,13 @@ class Forms {
                 String solutionCode = new String(Files.readAllBytes(Paths.get(solutionFile))).strip();
 
                 answer = new Code(userCode);
-                
-                this.score.setDenominator(this.score.getDenominator() + 1);
 
                 if (solutionCode.equals(this.answer.getCode())) {
                     System.out.println("Your code matches the solution!");
-                    this.score.setNumerator(this.score.getNumerator() + 1);
+                    rightAnswer();
                 } else {
-                    System.out.println("Your code does not match the solution. Please try again.");
+                    System.out.println("Your code does not match the solution.");
+                    wrongAnswer();
                 }
 
             } catch (IOException e) {
@@ -386,6 +391,16 @@ class Forms {
                 System.out.println("Error deleting the input file: " + e.getMessage());
             }
                 return this.score;
+        }
+
+        private void rightAnswer() {
+            this.score.setNumerator(1);
+            this.getResult().updateGrade(this.score);
+        }
+
+        private void wrongAnswer() {
+            this.score.setNumerator(0);
+            this.getResult().updateGrade(this.score);
         }
 
         @Override
@@ -416,8 +431,10 @@ class Forms {
             this.answer = new String[solution.length];
             this.grades = grades;
             this.id = 0;
+            this.numerator = 0;
+            this.denominator = 0;
             setDenominator();
-            this.score = new Fraction(0, this.denominator); // Initialize with a valid fraction
+            this.score = new Fraction(this.numerator, this.denominator); // Initialize with a valid fraction
         }
 
         private void setDenominator() {
@@ -428,6 +445,7 @@ class Forms {
 
         private Fraction finishedAnswer() {
             this.score.setNumerator(numerator);
+            this.getResult.
             return this.score;
         }
 
@@ -511,13 +529,45 @@ class Forms {
         }
 
         public void execute(){
-            //
-            System.out.println("Executing code...");
-            System.out.println(this.code);
+            //Esta funcao deve passar a string this.code como argumento para outro programa que a executa
+            //E guarda o resultado numa variavel de tipo String
+            // Usa java Runtime
+            execute(new String[0]);
         }
 
-        public void execute(String args[]){
-            //
+        public void execute(String[] args) {
+            try {
+                String[] command;
+                if (args.length == 0) {
+                    // If no arguments, only pass the code to be executed
+                    command = new String[] { "java", "ExternalRunner", code };
+                } else {
+                    // If there are arguments, pass the code and the arguments
+                    command = new String[args.length + 3];
+                    command[0] = "java";
+                    command[1] = "ExternalRunner";
+                    command[2] = code;
+                    System.arraycopy(args, 0, command, 3, args.length);
+                }
+    
+                Process process = Runtime.getRuntime().exec(command);
+                process.waitFor();
+    
+                Scanner scanner = new Scanner(process.getInputStream()).useDelimiter("\\A");
+                String result = scanner.hasNext() ? scanner.next() : "";
+                System.out.println(result);
+    
+                scanner = new Scanner(process.getErrorStream()).useDelimiter("\\A");
+                String error = scanner.hasNext() ? scanner.next() : "";
+                if (!error.isEmpty()) {
+                    System.err.println("Error: " + error);
+                }
+
+                scanner.close();
+    
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
     }
@@ -552,8 +602,9 @@ class Forms {
                                 "   n := integer(read \"Number: \"); -- type conversion: type(expression)\n" + //
                                 "   write \"Number \",n, \" is \";\n" + //
                                 "   if", "then -- = is the comparison operator (as in math)\n" +//
-                                "      writeln \"even\"\n", 
-                                "      \nwriteln \"odd\"\n"+
+                                "      writeln \"even\"\n" +
+                                "   ", "\n"+
+                                "   writeln \"odd\"\n"+
                                 "   end;\n" + //
                                 "   -- PIL code to here" };
             String[] solution4 = {"n % 2 = 0", "else" };
