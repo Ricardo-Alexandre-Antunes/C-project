@@ -8,11 +8,11 @@ statementWithBreak: statement ';' ;
 
 statement: (assignment | write | if | loop ) ;
 
-if: 'if' expr 'then' statementComposition ('else' elseStat=statementComposition)? 'end'         #If
+if: 'if' expr 'then' statementComposition ('else' elseStat=statementComposition)? 'end'         #IfElse
   ; 
 
-loop: 'loop' statementWithBreak* ('until' expr | 'while' expr) 'do' statementComposition 'end'  #LoopFull
-    | 'loop' statementComposition ('until' expr | 'while' expr) 'do' 'end'                      #LoopSimple
+loop: 'loop' statementWithBreak* (loopUntil='until' expr | loopWhile='while' expr) 'do' statementComposition 'end'  #LoopFull
+    | 'loop' statementComposition (loopUntil='until' expr | loopWhile='while' expr) 'do' 'end'                      #LoopSimple
     ;   
 
 write:  'writeln' (expr ',')* expr  #WritelnExpr
@@ -30,13 +30,17 @@ expr: '(' expr ')'                                                              
     | INTEGER                                                                   #ExprInteger                                
     | FLOAT                                                                     #ExprFloat               
     | idset                                                                     #ExprId                           
-    | TEXT                                                                      #ExprText                                 
+    | TEXT                                                                      #ExprText   
+    | BOOLEAN                                                                   #ExprBoolean                              
     | type=TYPES '(' expr ')'                                                   #ExprTypeConversion
     | 'read' expr                                                               #ExprRead                                  
     ;
 
-idset: ID | ID '.' idset ;  
+idset: ID               #IdsetID
+      | ID '.' idset    #IdsetRecursive
+      ;  
 
+BOOLEAN: 'true' | 'false' ;
 TYPES: 'integer' | 'real' | 'text' ;
 ANDTHEN: 'and' 'then' ;
 ORELSE: 'or' 'else' ;
