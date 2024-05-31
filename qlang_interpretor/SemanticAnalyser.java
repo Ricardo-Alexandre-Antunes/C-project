@@ -85,16 +85,27 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
 
    @Override public Boolean visitAssignment(PilParser.AssignmentContext ctx) {
       Boolean res = visit(ctx.expr()) && visit(ctx.idset());
+      String text = ctx.expr().getText();
+      String id = ctx.idset().getText();
+
+      if (text.startsWith("integer")) {
+         variablesTypes.put(id, "integer");
+         return res;
+      }
+      else if (text.startsWith("real")) {
+         variablesTypes.put(id, "real");
+         return res;
+      }
+      else if (text.startsWith("text")) {
+         variablesTypes.put(id, "text");
+         return res;
+      }
+
       if (res) {
-         if (!"text".equals(ctx.expr().eType.name()) || !"integer".equals(ctx.expr().eType.name()) || !"real".equals(ctx.expr().eType.name()) || !"boolean".equals(ctx.expr().eType.name())) {
+         if (!"text".equals(ctx.expr().eType.name()) && !"integer".equals(ctx.expr().eType.name()) && !"real".equals(ctx.expr().eType.name()) && !"boolean".equals(ctx.expr().eType.name())) {
             ErrorHandling.printError(ctx, "Invalid type for assignment!");
             res = false;
          }
-         if (!"text".equals(ctx.idset().eType.name())) {
-            ErrorHandling.printError(ctx, "Invalid type for variable!");
-            res = false;
-         }
-         String id = ctx.idset().getText();
          variablesTypes.put(id, ctx.expr().eType.name());
       } 
       return res;
@@ -107,6 +118,7 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
             ErrorHandling.printError(ctx, "Invalid type for prompt!");
             res = false;
          }
+         ctx.eType = textType;
       }
       return res;
    }
@@ -160,9 +172,24 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
    }
 
    @Override public Boolean visitExprUnary(PilParser.ExprUnaryContext ctx) {
-      Boolean res = visit(ctx.expr()) && checkNumericType(ctx, ctx.expr().eType);
-      if (res) {
-         ctx.eType = ctx.expr().eType;
+      Boolean res = false;
+      if (ctx.op.getText().equals("not")) {
+         res = visit(ctx.expr());
+         if (res) {
+            if (!"boolean".equals(ctx.expr().eType.name())) {
+               ErrorHandling.printError(ctx, "Logical operator applied to non-boolean operand!");
+               res = false;
+            }
+            else {
+               ctx.eType = booleanType;
+            }
+         }
+      }
+      else {
+         res = visit(ctx.expr()) && checkNumericType(ctx, ctx.expr().eType);
+         if (res) {
+            ctx.eType = ctx.expr().eType;
+         }
       }
       return res;
    }
@@ -183,10 +210,25 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
 
    @Override public Boolean visitExprId(PilParser.ExprIdContext ctx) {
       Boolean res = visit(ctx.idset());
-      if (res) {
-         if (!"text".equals(ctx.idset().eType.name())) {
-            ErrorHandling.printError(ctx, "Invalid type for variable!");
-            res = false;
+      String id = ctx.idset().getText();
+      
+      if (variablesTypes.containsKey(id)) {
+         switch (variablesTypes.get(id)) {
+            case "integer":
+               ctx.eType = integerType;
+               break;
+            case "real":
+               ctx.eType = realType;
+               break;
+            case "text":
+               ctx.eType = textType;
+               break;
+            case "boolean":
+               ctx.eType = booleanType;
+               break;
+            default:
+               ctx.eType = null;
+               break;
          }
       }
       return res;
@@ -213,10 +255,14 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
       final String REGEX_INT = "^-?\\d+$";
       final String REGEX_DOUBLE = "^-?\\d+(\\.\\d+)?$";
 
+      if (text.startsWith("read")) {
+         return res;
+      }
+
       if (res) {
          String type = ctx.type.getText();
-         if ("integer".equals(type) || Pattern.matches(REGEX_INT, text)) {
-            if (ctx.expr().eType.isNumeric()) {
+         if ("integer".equals(type)) {
+            if (ctx.expr().eType.isNumeric() || Pattern.matches(REGEX_INT, text)) {
                ctx.eType = integerType;
             }
             else {
@@ -224,8 +270,8 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
                res = false;
             }
          }
-         else if ("real".equals(type) || Pattern.matches(REGEX_DOUBLE, text)) {
-            if (ctx.expr().eType.isNumeric()) {
+         else if ("real".equals(type)) {
+            if (ctx.expr().eType.isNumeric() || Pattern.matches(REGEX_DOUBLE, text)) {
                ctx.eType = realType;
             }
             else {
@@ -250,26 +296,14 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
       return res;
    }
 
-   @Override public Boolean visitIdsetID(PilParser.IdsetIDContext ctx) {
+   @Override public Boolean visitIdset(PilParser.IdsetContext ctx) {
       Boolean res = true;
-      ctx.eType = textType;
-      return res;
-   }
-
-   @Override public Boolean visitIdsetRecursive(PilParser.IdsetRecursiveContext ctx) {
-      Boolean res = visit(ctx.idset());
-      if (res) {
-         if (!"text".equals(ctx.idset().eType.name())) {
-            ErrorHandling.printError(ctx, "Invalid type for variable!");
-            res = false;
-         }
-         ctx.eType = textType;
-      }
       return res;
    }
 
    private Boolean checkNumericType(ParserRuleContext ctx, Type t) {
       Boolean res = true;
+      
       if (!t.isNumeric())
       {
          ErrorHandling.printError(ctx, "Numeric operator applied to a non-numeric operand!");

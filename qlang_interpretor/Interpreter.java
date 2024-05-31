@@ -49,8 +49,15 @@ public class Interpreter extends PilBaseVisitor<Value> {
 
    @Override public Value visitLoopFull(PilParser.LoopFullContext ctx) {
       Value res = null;
-      String loop_until = ctx.loopUntil.getText();
-      String loop_while = ctx.loopWhile.getText();
+      String loop_until = null;
+      String loop_while = null;
+
+      if (ctx.loopUntil != null) {
+         loop_until = ctx.loopUntil.getText();
+      } 
+      else if (ctx.loopWhile != null) {
+         loop_while = ctx.loopWhile.getText();
+      } 
 
       while (true) {
          for (int i = 0; i < ctx.statementWithBreak().size(); i++)
@@ -98,8 +105,8 @@ public class Interpreter extends PilBaseVisitor<Value> {
    @Override public Value visitWritelnExpr(PilParser.WritelnExprContext ctx) {
       String res = "";
       for (int i = 0; i < ctx.expr().size(); i++) {
-         Value val = visit(ctx.expr(i));
-         res += val.toString();
+         String val = (String) ((Value) visit(ctx.expr(i))).getValue().toString();
+         res += val;
       }
       System.out.println(res);
       return null;
@@ -108,8 +115,8 @@ public class Interpreter extends PilBaseVisitor<Value> {
    @Override public Value visitWriteExpr(PilParser.WriteExprContext ctx) {
       String res = "";
       for (int i = 0; i < ctx.expr().size(); i++) {
-         Value val = visit(ctx.expr(i));
-         res += val.toString();
+         String val = (String) ((Value) visit(ctx.expr(i))).getValue().toString();
+         res += val;
       }
       System.out.print(res);
       return null;
@@ -146,7 +153,10 @@ public class Interpreter extends PilBaseVisitor<Value> {
       Value res = visit(ctx.expr());
       System.out.print(res);
       Scanner scanner = new Scanner(System.in);
-      String input = scanner.nextLine();
+      String input = "";
+      if (scanner.hasNextLine()) {
+         input = scanner.nextLine();
+      }
       Value result = new TextValue(input);
       scanner.close();
       return result;
@@ -212,7 +222,7 @@ public class Interpreter extends PilBaseVisitor<Value> {
    }
 
    @Override public Value visitExprText(PilParser.ExprTextContext ctx) {
-      TextValue res = new TextValue(ctx.TEXT().getText());
+      TextValue res = new TextValue(ctx.TEXT().getText().replaceAll("\"", ""));
       return res;
    }
 
@@ -277,18 +287,16 @@ public class Interpreter extends PilBaseVisitor<Value> {
       }
    }
 
-   @Override public Value visitIdsetID(PilParser.IdsetIDContext ctx) {
-      TextValue res = new TextValue(ctx.ID().getText());
+   @Override public Value visitIdset(PilParser.IdsetContext ctx) {
+      Value res = null;
+      if (variables.containsKey(ctx.ID().getText())) {
+         return variables.get(ctx.ID().getText());
+      }
       return res;
    }
 
    @Override public Value visitExprBoolean(PilParser.ExprBooleanContext ctx) {
       BooleanValue res = new BooleanValue(Boolean.parseBoolean(ctx.BOOLEAN().getText()));
-      return res;
-   }
-
-   @Override public Value visitIdsetRecursive(PilParser.IdsetRecursiveContext ctx) {
-      Value res = visit(ctx.idset());
       return res;
    }
 }
