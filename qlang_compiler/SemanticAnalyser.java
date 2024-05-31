@@ -9,7 +9,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    private final TextType stringType = new TextType();
    private final IntegerType integerType = new IntegerType();
    private final CodeType codeType = new CodeType();
-   private final FractionType = new FractionType();
+   private final FractionType fractionType = new FractionType();
    private final QuestionType questionType = new QuestionType();
    private ArrayList<String> navigatingidSet = new ArrayList<String>();
 
@@ -97,31 +97,101 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    //inserir idset com type no hashmap
    @Override public Boolean visitDeclaration(QlangParser.DeclarationContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+      Boolean res = true;
+      String idset = ctx.idset().getText();
+      String type = "code";
+      if(ctx.VARIABLETYPES()!=null) type = ctx.VARIABLETYPES().getText();
+      
+      if (declaredVariables.containsKey(idset)) {
+         System.out.println("Error: " + idset + " is already declared.");
+         res = false;
+      } else {
+         declaredVariables.put(idset, type);
+      }
+
+      return res;
    }
+
 
    //verificar se idset foi declarado do tipo code
    @Override public Boolean visitCode(QlangParser.CodeContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
+      Boolean res = true;
+      String idset = ctx.idset().getText();
+
+      if (!declaredVariables.containsKey(idset)) {
+         System.out.println("Error: " + idset + " has not been declared.");
+         res = false;
+      } else if (!"code".equals(declaredVariables.get(idset))) {
+         System.out.println("Error: " + idset + " is not of type code.");
+         res = false;
+      }
+
+      return true;
+      //Ha um problema com o pil assignemnt (muito avancado)
       //return res;
    }
 
-   //verificar se idset foi declarado do mesmo tipo que expr (não pode ser question logo não pode ter pontos, tem que ser terminal)
+
+   // se o idset tiver . entao o expr tem que ser uma question senao tem que ter o mesmo tipo que expr
    @Override public Boolean visitIDAssignment(QlangParser.IDAssignmentContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
+      Boolean res = true;
+      String idset = ctx.idset().getText();
+      //isto pode estar mal
+      Type exprType = ctx.expr().eType;
+
+      // Visit the expression to determine its type
+      res = visit(ctx.expr());
+
+      if (idset.contains(".")) {
+         // If idset contains a dot, expr must be of type 'question'
+         if (!"question".equals(exprType.name())) {
+            System.out.println("Error: The expression assigned to " + idset + " must be of type 'question'. Found: " + exprType.name());
+            res = false;
+         }
+      } else {
+         // Check if idset has been declared
+         if (!declaredVariables.containsKey(idset)) {
+            System.out.println("Error: " + idset + " has not been declared.");
+            res = false;
+         } else {
+            // Check if the type of idset matches the type of the expression
+            String idsetType = declaredVariables.get(idset);
+            if (!idsetType.equals(exprType.name())) {
+               System.out.println("Error: Type mismatch for " + idset + ". Expected: " + idsetType + ", Found: " + exprType.name());
+               res = false;
+            }
+         }
+      }
+
+      return res && visitChildren(ctx);
       //return res;
    }
 
-   //verificar se idset foi declarado como question
+
+   //verificar se primeiro idset e do tipo question e se o segundo idset e do tipo question class ou seja multi choice, hole, open, code hole, code open, code-output ou composed
    @Override public Boolean visitNewAssignment(QlangParser.NewAssignmentContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
+      Boolean res = true;
+      String idset = ctx.idset(0).getText();
+      String newIdset = ctx.idset(1).getText();
+
+      if (!declaredVariables.containsKey(idset)) {
+         System.out.println("Error: " + idset + " has not been declared.");
+         res = false;
+      } else if (!"question".equals(declaredVariables.get(idset))) {
+         System.out.println("Error: " + idset + " is not of type 'question'.");
+         res = false;
+      } else if (declaredVariables.containsKey(newIdset)) {
+         System.out.println("Error: " + newIdset + " is already declared.");
+         res = false;
+      } else {
+         // Declare the new idset as a question
+         declaredVariables.put(newIdset, "question");
+      }
+
+      return res && visitChildren(ctx);
       //return res;
    }
+
 
    //verificar se idset é terminal (não pode ter pontos)
    @Override public Boolean visitHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx) {
