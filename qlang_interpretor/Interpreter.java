@@ -2,7 +2,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 
 @SuppressWarnings("CheckReturnValue")
-public class Interpreter extends pilBaseVisitor<Value> {
+public class Interpreter extends PilBaseVisitor<Value> {
    private HashMap<String, Value> variables = new HashMap<>();
    private HashMap<String, String> variablesTypes = new HashMap<>();
 
@@ -10,31 +10,31 @@ public class Interpreter extends pilBaseVisitor<Value> {
       this.variablesTypes = variables;
    }
 
-   @Override public Value visitProgram(pilParser.ProgramContext ctx) {
+   @Override public Value visitProgram(PilParser.ProgramContext ctx) {
       Value res = null;
       return visitChildren(ctx);
       //return res;
    }
 
-   @Override public Value visitStatementComposition(pilParser.StatementCompositionContext ctx) {
+   @Override public Value visitStatementComposition(PilParser.StatementCompositionContext ctx) {
       Value res = null;
       return visitChildren(ctx);
       //return res;
    }
 
-   @Override public Value visitStatementWithBreak(pilParser.StatementWithBreakContext ctx) {
+   @Override public Value visitStatementWithBreak(PilParser.StatementWithBreakContext ctx) {
       Value res = null;
       return visitChildren(ctx);
       //return res;
    }
 
-   @Override public Value visitStatement(pilParser.StatementContext ctx) {
+   @Override public Value visitStatement(PilParser.StatementContext ctx) {
       Value res = null;
       return visitChildren(ctx);
       //return res;
    }
 
-   @Override public Value visitIfElse(pilParser.IfElseContext ctx) {
+   @Override public Value visitIfElse(PilParser.IfElseContext ctx) {
       Value res = null;
       String elseStat = ctx.elseStat.getText();
       BooleanValue condition = (BooleanValue) visit(ctx.expr());
@@ -47,7 +47,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return res;
    }
 
-   @Override public Value visitLoopFull(pilParser.LoopFullContext ctx) {
+   @Override public Value visitLoopFull(PilParser.LoopFullContext ctx) {
       Value res = null;
       String loop_until = ctx.loopUntil.getText();
       String loop_while = ctx.loopWhile.getText();
@@ -72,7 +72,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return res;
    }
 
-   @Override public Value visitLoopSimple(pilParser.LoopSimpleContext ctx) {
+   @Override public Value visitLoopSimple(PilParser.LoopSimpleContext ctx) {
       Value res = null;
       String loop_until = ctx.loopUntil.getText();
       String loop_while = ctx.loopWhile.getText();
@@ -95,7 +95,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return res;
    }
 
-   @Override public Value visitWritelnExpr(pilParser.WritelnExprContext ctx) {
+   @Override public Value visitWritelnExpr(PilParser.WritelnExprContext ctx) {
       String res = "";
       for (int i = 0; i < ctx.expr().size(); i++) {
          Value val = visit(ctx.expr(i));
@@ -105,7 +105,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return null;
    }
 
-   @Override public Value visitWriteExpr(pilParser.WriteExprContext ctx) {
+   @Override public Value visitWriteExpr(PilParser.WriteExprContext ctx) {
       String res = "";
       for (int i = 0; i < ctx.expr().size(); i++) {
          Value val = visit(ctx.expr(i));
@@ -115,7 +115,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return null;
    }
 
-   @Override public Value visitAssignment(pilParser.AssignmentContext ctx) {
+   @Override public Value visitAssignment(PilParser.AssignmentContext ctx) {
       String id = ctx.idset().getText();
       String type = variablesTypes.get(id);
 
@@ -142,7 +142,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return null;
    }
 
-   @Override public Value visitExprRead(pilParser.ExprReadContext ctx) {
+   @Override public Value visitExprRead(PilParser.ExprReadContext ctx) {
       Value res = visit(ctx.expr());
       System.out.print(res);
       Scanner scanner = new Scanner(System.in);
@@ -152,7 +152,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       return result;
    }
 
-   @Override public Value visitExprBinaryLogical(pilParser.ExprBinaryLogicalContext ctx) {
+   @Override public Value visitExprBinaryLogical(PilParser.ExprBinaryLogicalContext ctx) {
       Value expr1 = visit(ctx.expr(0));
       Value expr2 = visit(ctx.expr(1));
       String op = ctx.op.getText();
@@ -175,7 +175,7 @@ public class Interpreter extends pilBaseVisitor<Value> {
       }
    }
 
-   @Override public Value visitExprUnary(pilParser.ExprUnaryContext ctx) {
+   @Override public Value visitExprUnary(PilParser.ExprUnaryContext ctx) {
       Value res = visit(ctx.expr());
       String op = ctx.op.getText();
 
@@ -191,12 +191,12 @@ public class Interpreter extends pilBaseVisitor<Value> {
       }
    }
 
-   @Override public Value visitExprFloat(pilParser.ExprFloatContext ctx) {
+   @Override public Value visitExprFloat(PilParser.ExprFloatContext ctx) {
       RealValue res = new RealValue(Double.parseDouble(ctx.FLOAT().getText()));
       return res;
    }
 
-   @Override public Value visitExprAddMinus(pilParser.ExprAddMinusContext ctx) {
+   @Override public Value visitExprAddMinus(PilParser.ExprAddMinusContext ctx) {
       Value expr1 = visit(ctx.expr(0));
       Value expr2 = visit(ctx.expr(1));
       String op = ctx.op.getText();
@@ -211,27 +211,27 @@ public class Interpreter extends pilBaseVisitor<Value> {
       }
    }
 
-   @Override public Value visitExprText(pilParser.ExprTextContext ctx) {
+   @Override public Value visitExprText(PilParser.ExprTextContext ctx) {
       TextValue res = new TextValue(ctx.TEXT().getText());
       return res;
    }
 
-   @Override public Value visitExprParenthesis(pilParser.ExprParenthesisContext ctx) {
+   @Override public Value visitExprParenthesis(PilParser.ExprParenthesisContext ctx) {
       Value res = visit(ctx.expr());
       return res;
    }
 
-   @Override public Value visitExprInteger(pilParser.ExprIntegerContext ctx) {
+   @Override public Value visitExprInteger(PilParser.ExprIntegerContext ctx) {
       IntegerValue res = new IntegerValue(Integer.parseInt(ctx.INTEGER().getText()));
       return res;
    }
 
-   @Override public Value visitExprId(pilParser.ExprIdContext ctx) {
+   @Override public Value visitExprId(PilParser.ExprIdContext ctx) {
       Value res = visit(ctx.idset());
       return res;
    }
 
-   @Override public Value visitExprBinaryRelational(pilParser.ExprBinaryRelationalContext ctx) {
+   @Override public Value visitExprBinaryRelational(PilParser.ExprBinaryRelationalContext ctx) {
       Value expr1 = visit(ctx.expr(0));
       Value expr2 = visit(ctx.expr(1));
       String op = ctx.op.getText();
@@ -254,13 +254,13 @@ public class Interpreter extends pilBaseVisitor<Value> {
       }
    }
 
-   @Override public Value visitExprTypeConversion(pilParser.ExprTypeConversionContext ctx) {
+   @Override public Value visitExprTypeConversion(PilParser.ExprTypeConversionContext ctx) {
       Value res = visit(ctx.expr());
       String type = ctx.type.getText();
       return res.convertTo(type);
    }
 
-   @Override public Value visitExprMultDivMod(pilParser.ExprMultDivModContext ctx) {
+   @Override public Value visitExprMultDivMod(PilParser.ExprMultDivModContext ctx) {
       Value expr1 = visit(ctx.expr(0));
       Value expr2 = visit(ctx.expr(1));
       String op = ctx.op.getText();
@@ -277,17 +277,17 @@ public class Interpreter extends pilBaseVisitor<Value> {
       }
    }
 
-   @Override public Value visitIdsetID(pilParser.IdsetIDContext ctx) {
+   @Override public Value visitIdsetID(PilParser.IdsetIDContext ctx) {
       TextValue res = new TextValue(ctx.ID().getText());
       return res;
    }
 
-   @Override public Value visitExprBoolean(pilParser.ExprBooleanContext ctx) {
+   @Override public Value visitExprBoolean(PilParser.ExprBooleanContext ctx) {
       BooleanValue res = new BooleanValue(Boolean.parseBoolean(ctx.BOOLEAN().getText()));
       return res;
    }
 
-   @Override public Value visitIdsetRecursive(pilParser.IdsetRecursiveContext ctx) {
+   @Override public Value visitIdsetRecursive(PilParser.IdsetRecursiveContext ctx) {
       Value res = visit(ctx.idset());
       return res;
    }
