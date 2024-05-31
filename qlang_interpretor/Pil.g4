@@ -1,4 +1,4 @@
-grammar pil ;
+grammar Pil ;
 
 program: statementComposition  EOF ;     
 
@@ -21,7 +21,8 @@ write:  'writeln' (expr ',')* expr  #WritelnExpr
 
 assignment:  idset ':=' expr ;
 
-expr: '(' expr ')'                                                              #ExprParenthesis
+expr returns [Type eType, String varName]: 
+      '(' expr ')'                                                              #ExprParenthesis
     | op=('-' | '+' | 'not') expr                                               #ExprUnary
     | expr op=('*' | ':' | '%') expr                                            #ExprMultDivMod
     | expr op=('+' | '-') expr                                                  #ExprAddMinus
