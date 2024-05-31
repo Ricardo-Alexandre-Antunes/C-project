@@ -180,7 +180,9 @@ class Forms {
     public interface QuestionInterface {
         public Fraction execute(Scanner sc);
 
-        public void addQuestion(QuestionInterface q1);
+        public void addQuestion(QuestionInterface q1, String rah, int count);
+
+        public String getQuestionId();
     }
 
     abstract static class Question implements QuestionInterface{
@@ -200,10 +202,12 @@ class Forms {
 
         abstract String getAnswer();
 
-        abstract String getQuestionId();
+        public String getQuestionId(){
+            return "";
+        }
 
         @Override
-        public void addQuestion(Forms.QuestionInterface q1) {
+        public void addQuestion(Forms.QuestionInterface q1, String rah, int count) {
             // TODO Auto-generated method stub
             System.err.println("Method not implemented");
         }
@@ -214,6 +218,7 @@ class Forms {
         String[] solution;
         String[] answer;
         Fraction score;
+        HoleQuestion clone;
 
         public HoleQuestion(Result result, String[] question, String[] solution, String id) {
             super(result, id);
@@ -221,6 +226,7 @@ class Forms {
             this.solution = solution;
             this.answer = new String[solution.length];
             this.score = new Fraction(0, this.solution.length); // Initialize with a valid fraction
+            this.clone = null;
         }
 
         private Fraction rightAnswer() {
@@ -265,6 +271,11 @@ class Forms {
 
         @Override
         public Fraction execute(Scanner scanner) {
+            clone = new HoleQuestion(super.getResult(), this.question, this.solution, super.getQuestionId());
+            return clone.run(scanner);
+        }
+
+        public Fraction run(Scanner scanner){
             StringBuilder questionText = new StringBuilder();
             for (int i = 0; i < question.length; i++) {
                 questionText.append(question[i]);
@@ -311,20 +322,35 @@ class Forms {
         public String getAnswer() {
             return String.join("", answer);
         }
+
+		public Fraction getScore() {
+			return score;
+		}
+
+		public HoleQuestion getClone() {
+			return clone;
+		}
     }
 
     static class OpenQuestion extends Question {
         String question;
         String answer;
+        OpenQuestion clone;
 
         public OpenQuestion(Result result, String question, String id) {
             super(result, id);
             this.question = question;
             this.answer = "";
+            this.clone = null;
         }
 
         @Override
         public Fraction execute(Scanner scanner) {
+            clone = new OpenQuestion(super.getResult(), this.question, super.getQuestionId());
+            return clone.run(scanner);
+        }
+
+        public Fraction run(Scanner scanner) {
             StringBuilder sb = new StringBuilder();
 
             System.out.println("Answer the following question:");
@@ -368,6 +394,7 @@ class Forms {
         private String solutionFile;
         private String inputFilePath;
         private Fraction score;
+        private CodeOpenQuestion clone;
 
         public CodeOpenQuestion(Result result, String question, String solutionFile, String id) {
             super(result, id);
@@ -376,6 +403,7 @@ class Forms {
             this.answer = new Code("");
             this.inputFilePath = "CodeOpenQuestionInputFile.txt";
             this.score = new Fraction(0, 1); // Initialize with a valid fraction
+            this.clone = null;
             createInputFile();
         }
 
@@ -399,6 +427,10 @@ class Forms {
 
         @Override
         public Fraction execute(Scanner scanner) {
+            clone = new CodeOpenQuestion(super.getResult(), this.question, this.solutionFile, super.getQuestionId());
+            return clone.run(scanner);
+        }
+        public Fraction run(Scanner scanner) {
             System.out.println();
             System.out.println(question);
             System.out.println("Please write your code in the file: " + inputFilePath);
@@ -471,6 +503,7 @@ class Forms {
         int denominator;
         int numerator;
         Fraction score;
+        CodeHoleQuestion clone;
 
         public CodeHoleQuestion(Result result, String[] question, String[] solution, String[] grades, String id) {
             super(result, id);
@@ -480,6 +513,7 @@ class Forms {
             this.grades = grades;
             this.numerator = 0;
             this.denominator = 0;
+            this.clone = null;
             setDenominator();
             this.score = new Fraction(this.numerator, this.denominator); // Initialize with a valid fraction
         }
@@ -512,6 +546,11 @@ class Forms {
 
         @Override
         public Fraction execute(Scanner scanner) {
+            clone = new CodeHoleQuestion(super.getResult(), this.question, this.solution, this.grades, super.getQuestionId());
+            return clone.run(scanner);
+        }
+
+        public Fraction run(Scanner scanner) {
             StringBuilder questionText = new StringBuilder();
             for (int i = 0; i < question.length; i++) {
                 questionText.append(question[i]);
@@ -643,12 +682,45 @@ class Forms {
             this.category = category;
         }
 
-        public void addQuestion(QuestionInterface question) {
-            this.hierarchicalQuestions.add(question);
+        public void addQuestion(QuestionInterface question, String cat, int count) {
+            String[] category = cat.split("\\.");
+            boolean typefound = true;
+            if(category.length == count+1){
+                for(QuestionInterface q: this.hierarchicalQuestions){
+                    if(cat.equals(q.getQuestionId())){
+                        System.out.println("A question with (" + category +") is already defined!");
+                    }
+                }
+                this.hierarchicalQuestions.add(question);
+                return;
+            }
+            else{
+                for(QuestionInterface q: this.hierarchicalQuestions){
+                    if(category[count].equals(q.getQuestionId())){
+                        count++;
+                        q.addQuestion(question,cat,count);
+                        typefound = true;
+                        break;
+                    }
+                    else{
+                        typefound = false;
+                    }
+                }
+                if(typefound = false){
+                    String newCat = "";
+                    for(int i = 0; i<=count;i++){
+                        newCat += category[i];
+                    }
+                    QuestionManager subManager = new QuestionManager(newCat);
+                    this.hierarchicalQuestions.add(subManager);
+                    count++;
+                    subManager.addQuestion(question, cat, count);
+                }
+            }
         }
         
-
-        public String getId(){
+        @Override
+        public String getQuestionId(){
             return this.category;
         }
 
@@ -667,9 +739,7 @@ class Forms {
         String name;
         int id;
         Fraction f1;
-        QuestionInterface q1, q2, q3, q4;
-        QuestionManager questionManager_A = new QuestionManager("A");
-        QuestionManager questionManager_B = new QuestionManager("B");
+        QuestionManager QM = new QuestionManager("root");
 
         // Define user
         System.out.println("Nome: ");
@@ -682,23 +752,23 @@ class Forms {
 
         // Question 1
         String[] question = new String[]{"A atribuição de valor em PIL usa o operador ", "."};
-        String[] solution = new String[]{":="}; // Placeholder para respostas
-        q1 = new HoleQuestion(result, question, solution, "A.B.C");
-        questionManager_B.addQuestion(q1);
-        questionManager_A.addQuestion(questionManager_B);
+        String[] answer = new String[]{":="}; // Placeholder para respostas
+        QuestionInterface q1 = new HoleQuestion(result, question, answer, "Question.Banana.q1");
+        QM.addQuestion(q1,"Question.Banana.q1",0);
+
         f1 = q1.execute(scanner);
 
         // Open Question
-        q2 = new OpenQuestion(result, "Defina a estrutura de dados lista ligada.", "A.E");
-        questionManager_A.addQuestion(q2);
-        q2.execute(scanner);
+        QuestionInterface OpenQuestion = new OpenQuestion(result, "Defina a estrutura de dados lista ligada.", "OpenQuestion");
+        QM.addQuestion(OpenQuestion, "OpenQuestion", 0);
+        OpenQuestion.execute(scanner);
 
         // CodeOpenQuestion
         evenOddQuestion = "Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).";
         codeOpenFileName = "CodeOpenTestFile.txt";
-        q3 = new CodeOpenQuestion(result, evenOddQuestion, codeOpenFileName, "A.B.D");
-        questionManager_B.addQuestion(q3);
-        q3.execute(scanner);
+        QuestionInterface Code1 = new CodeOpenQuestion(result, evenOddQuestion, codeOpenFileName, "Question.Code1");
+        QM.addQuestion(Code1, "Question.Code1", 0);
+        Code1.execute(scanner);
 
         // CodeHoleQuestion
         String[] question4 = new String[]{
@@ -714,7 +784,7 @@ class Forms {
         };
         String[] solution4 = new String[]{"n % 2 = 0", "else"};
         String[] grades4 = new String[]{"10", "5"};
-        q4 = new CodeHoleQuestion(result, question4, solution4, grades4, "A.P");
+        QuestionInterface q4 = new CodeHoleQuestion(result, question4, solution4, grades4, "A.P");
         questionManager_A.addQuestion(q4);
         q4.execute(scanner);
 
