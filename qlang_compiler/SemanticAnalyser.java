@@ -41,14 +41,20 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    @Override public Boolean visitIDSetTerminal(QlangParser.IDSetTerminalContext ctx) {
       Boolean res = true;
       if (navigatingidSet.contains(ctx.ID().getText())) {
-         if (!declaredVariables.get(res).equals()
+         
          System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
          res = false;
-      } else {
+      } 
+      else if (!declaredVariables.get(res).equals("question")){
+         if (declaredVariables.containsKey(res)) res = false;
+         else {
+            declaredVariables.put(ctx.ID().getText(), "question");
+         }
+      }
+      else {
          navigatingidSet.clear();
       }
       return res;
-      //return res;
    }
 
    @Override public Boolean visitIDSetComposition(QlangParser.IDSetCompositionContext ctx) {
@@ -56,7 +62,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       if (navigatingidSet.contains(ctx.ID().getText())) {
          System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
          res = false;
-      } else {
+      } 
+      else if (!declaredVariables.get(res).equals("question")){
+         if (declaredVariables.containsKey(res)) res = false;
+         else {
+            declaredVariables.put(ctx.ID().getText(), "question");
+         }
+      }
+      else {
          navigatingidSet.add(ctx.ID().getText());
          visit(ctx.idset());
       }
@@ -196,6 +209,9 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
+
+
+   //comeca aqui -> Hugo
    @Override public Boolean visitIfLineSentenceCommand(QlangParser.IfLineSentenceCommandContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
