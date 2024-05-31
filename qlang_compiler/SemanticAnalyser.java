@@ -5,7 +5,11 @@ import java.util.HashMap;
 public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    private HashMap<String, String> declaredVariables = new HashMap<String, String>();
-
+   private final BooleanType booleanType = new BooleanType();
+   private final TextType stringType = new TextType();
+   private final IntegerType integerType = new IntegerType();
+   private final CodeType codeType = new CodeType();
+   private final QuestionType questionType = new QuestionType();
    private ArrayList<String> navigatingidSet = new ArrayList<String>();
 
    private final RealType realType = new RealType();
@@ -49,16 +53,9 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    @Override public Boolean visitIDSetTerminal(QlangParser.IDSetTerminalContext ctx) {
       Boolean res = true;
       if (navigatingidSet.contains(ctx.ID().getText())) {
-         
          System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
          res = false;
       } 
-      else if (!declaredVariables.get(res).equals("question")){
-         if (declaredVariables.containsKey(res)) res = false;
-         else {
-            declaredVariables.put(ctx.ID().getText(), "question");
-         }
-      }
       else {
          navigatingidSet.clear();
       }
@@ -71,13 +68,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
          System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
          res = false;
       } 
-      else if (!declaredVariables.get(res).equals("question")){
-         if (declaredVariables.containsKey(res)) res = false;
-         else {
-            declaredVariables.put(ctx.ID().getText(), "question");
-         }
+      else if (declaredVariables.containsKey(res)){
+         if (!declaredVariables.get(res).equals("QuestionSet")) res = false;
+
       }
       else {
+         declaredVariables.put(ctx.ID().getText(), "QuestionSet");
+      }
+      if (res) {
          navigatingidSet.add(ctx.ID().getText());
          visit(ctx.idset());
       }
@@ -85,56 +83,16 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
-   @Override public Boolean visitStatementQuestion(QlangParser.StatementQuestionContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatementDeclaration(QlangParser.StatementDeclarationContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatemtentAssignment(QlangParser.StatemtentAssignmentContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatementExecution(QlangParser.StatementExecutionContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatementExport(QlangParser.StatementExportContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatementCode(QlangParser.StatementCodeContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatementCommand(QlangParser.StatementCommandContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
-   @Override public Boolean visitStatementIfLineSentence(QlangParser.StatementIfLineSentenceContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
-   }
-
    @Override public Boolean visitNewQuestion(QlangParser.NewQuestionContext ctx) {
-      Boolean res = null;
+      Boolean res = true;
+      String[] questionSets = ctx.idset().getText().split(".");
+      String trueQuestion = questionSets[questionSets.length - 1];
+      if (declaredVariables.containsKey(trueQuestion)) {
+         if (!declaredVariables.get(trueQuestion).equals(ctx.QUESTIONTYPES().getText())) res = false;
+      }
+      else {
+         declaredVariables.put(trueQuestion, ctx.QUESTIONTYPES().getText());
+      }
       return visitChildren(ctx);
       //return res;
    }
