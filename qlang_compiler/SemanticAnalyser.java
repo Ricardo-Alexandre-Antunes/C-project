@@ -86,6 +86,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    // JOAO : Não falta o res no return?
+   // Hugo : é capaz
    @Override
    public Boolean visitNewQuestion(QlangParser.NewQuestionContext ctx) {
       Boolean res = true;
@@ -102,6 +103,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    // inserir idset com type no hashmap
+   // hugo
    @Override
    public Boolean visitDeclaration(QlangParser.DeclarationContext ctx) {
       Boolean res = true;
@@ -121,6 +123,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    // verificar se idset foi declarado do tipo code
+   //hugo
    @Override
    public Boolean visitCode(QlangParser.CodeContext ctx) {
       Boolean res = true;
@@ -141,6 +144,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    // se o idset tiver . entao o expr tem que ser uma question senao tem que ter o
    // mesmo tipo que expr
+   // hugo
    @Override
    public Boolean visitIDAssignment(QlangParser.IDAssignmentContext ctx) {
       Boolean res = true;
@@ -181,64 +185,74 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    // verificar se primeiro idset e do tipo question e se o segundo idset e do tipo
    // question class ou seja multi choice, hole, open, code hole, code open,
    // code-output ou composed
+   // hugo
    @Override
    public Boolean visitNewAssignment(QlangParser.NewAssignmentContext ctx) {
       Boolean res = true;
-      String idset = ctx.idset(0).getText();
-      String newIdset = ctx.idset(1).getText();
+      String firstIdset = ctx.idset(0).getText();
+      String secondIdset = ctx.idset(1).getText();
 
-      if (!declaredVariables.containsKey(idset)) {
-         System.out.println("Error: " + idset + " has not been declared.");
+      // Verificar se o primeiro idset foi declarado e é do tipo 'question'
+      if (!declaredVariables.containsKey(firstIdset)) {
+         System.out.println("Error: " + firstIdset + " has not been declared.");
          res = false;
-      } else if (!"question".equals(declaredVariables.get(idset))) {
-         System.out.println("Error: " + idset + " is not of type 'question'.");
+      } else if (!"question".equals(declaredVariables.get(firstIdset))) {
+         System.out.println("Error: " + firstIdset + " is not of type 'question'.");
          res = false;
-      } else if (declaredVariables.containsKey(newIdset)) {
-         System.out.println("Error: " + newIdset + " is already declared.");
-         res = false;
-      } else {
-         // Declare the new idset as a question
-         declaredVariables.put(newIdset, "question");
       }
 
-      return res && visitChildren(ctx);
-      // return res;
+      // Verificar se o segundo idset é um dos tipos permitidos
+      if (res) {
+         String secondIdsetType = declaredVariables.get(secondIdset);
+         if (secondIdsetType == null || 
+               !(secondIdsetType.equals("multi-choice") || 
+               secondIdsetType.equals("hole") || 
+               secondIdsetType.equals("open") || 
+               secondIdsetType.equals("code-hole") || 
+               secondIdsetType.equals("code-open") || 
+               secondIdsetType.equals("code-output") || 
+               secondIdsetType.equals("composed"))) {
+               System.out.println("Error: " + secondIdset + " must be of type 'multi-choice', 'hole', 'open', 'code-hole', 'code-open', 'code-output' or 'composed'. Found: " + secondIdsetType);
+               res = false;
+         }
+      }
+
+      return res;
    }
+
 
    // verificar se idset é terminal (não pode ter pontos)
 
-   // JOAO: Nao tenho a certeza
+   // Hugo
    @Override
    public Boolean visitHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx) {
       Boolean res = true;
       String idset = ctx.idset().getText();
       Type exprType = ctx.expr().eType;
 
+      // Visit the expression to determine its type
       res = visit(ctx.expr());
 
+      // Verificar se idset é terminal (não pode ter pontos)
       if (idset.contains(".")) {
-         System.out.println("Error: The expression assigned to " + idset + " must be terminal.");
+         System.out.println("Error: The idset " + idset + " must be terminal and cannot contain dots.");
          res = false;
-      } else {
-         if (!declaredVariables.containsKey(idset)) {
-            System.out.println("Error: " + idset + " has not been declared.");
-            res = false;
-         } else {
-            String idsetType = declaredVariables.get(idset);
-            if (!idsetType.equals(exprType.name())) {
-               System.out.println(
-                     "Error: Type mismatch for " + idset + ". Expected: " + idsetType + ", Found: " + exprType.name());
-               res = false;
-            }
-         }
       }
-      return res && visitChildren(ctx);
-      // return res;
+
+      // Verificar se expr é do tipo 'code-hole'
+      if (!"code-hole".equals(exprType.name())) {
+         System.out.println("Error: The expression assigned to " + idset + " must be of type 'code-hole'. Found: "
+                  + exprType.name());
+         res = false;
+      }
+
+      return res;
    }
 
    // verificar se idset é do tipo question ou code
 
    // JOAO
+   // hugo, nao era preciso aquilo
    @Override
    public Boolean visitExecution(QlangParser.ExecutionContext ctx) {
       Boolean res = true;
@@ -255,28 +269,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
          }
       }
 
-      /*
-       * É preciso isto?
-       * 
-       * if (ctx.expr() != null) {
-       * // Visit the expression to determine its type
-       * res = res && visit(ctx.expr());
-       * Type exprType = ctx.expr().eType;
-       * if (!"text".equals(exprType.name())) {
-       * System.out.println("Error: The expression must be of type 'text'. Found: " +
-       * exprType.name());
-       * res = false;
-       * }
-       * }
-       */
-
-      return res && visitChildren(ctx);
+      return res;
    }
 
    // verificar se expr é do tipo text
 
    // JOAO : Aqui tb n se devia verficiar se o idset é do tipo Result? (que é o
    // único que faz export)
+   // Hugo eu acho que sim
    @Override
    public Boolean visitExport(QlangParser.ExportContext ctx) {
       Boolean res = true;
@@ -407,6 +407,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    // segundo integer não pode ser 0 e ver se é fracao ou integer
 
    // JOAO
+   // Hugo para de por VisitChildren em tudo ze
    @Override
    public Boolean visitValueExpr(QlangParser.ValueExprContext ctx) {
       Boolean res = true;
@@ -432,7 +433,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
          res = false; // This case should not occur if the grammar is correct
       }
 
-      return res && visitChildren(ctx);
+      return res;
    }
 
    @Override
@@ -492,11 +493,37 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    @Override
    public Boolean visitTypeExpr(QlangParser.TypeExprContext ctx) {
-      Boolean res = null;
-      // switch ver VARIABLETYPES mudar type accordingly
-      return visitChildren(ctx);
-      // return res;
+       Boolean res = true;
+   
+       // Obter o tipo especificado em VARIABLETYPES
+       String variableType = ctx.VARIABLETYPES().getText();
+   
+       // Verificar o tipo e definir ctx.eType de acordo
+       switch (variableType) {
+           case "integer":
+               ctx.eType = integerType;
+               break;
+           case "real":
+               ctx.eType = realType;
+               break;
+           case "text":
+               ctx.eType = textType;
+               break;
+           case "question":
+               ctx.eType = questionType;
+               break;
+           case "fraction":
+               ctx.eType = fractionType;
+               break;
+           default:
+               System.out.println("Error: Unknown type " + variableType);
+               res = false;
+               break;
+       }
+   
+       return res && visitChildren(ctx);
    }
+   
 
    @Override
    public Boolean visitUnaryExpr(QlangParser.UnaryExprContext ctx) {
@@ -507,6 +534,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       return res;
    }
 
+   //hugo
    @Override
    public Boolean visitExprMultDivMod(QlangParser.ExprMultDivModContext ctx) {
       Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1)) && checkNumericType(ctx, ctx.expr(0).eType)
@@ -518,6 +546,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       // return res;
    }
 
+   //hugo
    @Override
    public Boolean visitReadExpr(QlangParser.ReadExprContext ctx) {
       Boolean res = null;
@@ -526,6 +555,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       // return res;
    }
 
+   //hugo
    @Override
    public Boolean visitExprAddMinus(QlangParser.ExprAddMinusContext ctx) {
       Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1)) && checkNumericType(ctx, ctx.expr(0).eType)
@@ -539,34 +569,33 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    // verificar se valores numericos
 
    // JOAO
+   // Hugo, acho que aqui tinhas de usar a funcao do Type, alterei.
    @Override
    public Boolean visitExprBinaryRelational(QlangParser.ExprBinaryRelationalContext ctx) {
-      Boolean res = true;
-
-      // Visit the left and right expressions
-      res = visit(ctx.expr(0)) && visit(ctx.expr(1));
-
-      // Check the type of the left expression
-      Type leftType = ctx.expr(0).eType;
-      if (!(leftType instanceof IntegerType || leftType instanceof FractionType || leftType instanceof RealType)) {
-         System.out.println(
-               "Error: Left operand of binary relational expression must be a numeric type. Found: " + leftType.name());
-         res = false;
-      }
-
-      // Check the type of the right expression
-      Type rightType = ctx.expr(1).eType;
-      if (!(rightType instanceof IntegerType || rightType instanceof FractionType || rightType instanceof RealType)) {
-         System.out.println("Error: Right operand of binary relational expression must be a numeric type. Found: "
-               + rightType.name());
-         res = false;
-      }
-
-      // Set the type of the relational expression to boolean
-      ctx.eType = booleanType;
-
-      return res;
+       Boolean res = true;
+   
+       // Visit the left and right expressions
+       res = visit(ctx.expr(0)) && visit(ctx.expr(1));
+   
+       if (res) {
+           // Get the types of the left and right expressions
+           Type leftType = ctx.expr(0).eType;
+           Type rightType = ctx.expr(1).eType;
+   
+           // Check if both types are numeric
+           if (!leftType.isNumeric() || !rightType.isNumeric()) {
+               System.out.println("Error: Both operands of a binary relational expression must be numeric. Found: "
+                       + leftType.name() + " and " + rightType.name());
+               res = false;
+           } else {
+               // Set the type of the relational expression to boolean
+               ctx.eType = booleanType;
+           }
+       }
+   
+       return res;
    }
+   
 
    @Override
    public Boolean visitIfLineSentence(QlangParser.IfLineSentenceContext ctx) {
@@ -575,6 +604,8 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       // return res;
    }
 
+
+   //Hugo
    @Override
    public Boolean visitIfBlock(QlangParser.IfBlockContext ctx) {
       Boolean res = true;
@@ -593,7 +624,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       }
       return res;
    }
-
+   //Hugo
    @Override
    public Boolean visitElseifBlock(QlangParser.ElseifBlockContext ctx) {
       Boolean res = true;
