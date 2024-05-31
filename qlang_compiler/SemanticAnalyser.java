@@ -332,17 +332,48 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
-   @Override public Boolean visitIfBlock(QlangParser.IfBlockContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+      @Override
+   public Boolean visitIfBlock(QlangParser.IfBlockContext ctx) {
+      Boolean res = true;
+      // Check if the expression inside the if condition is boolean
+      Type exprType = getTypeByExpression(ctx.expr());
+      if (!(exprType instanceof BooleanType)) {
+         System.out.println("Error: The condition in the if statement must be of type boolean.");
+         res = false;
+      }
+      // Visit all the statements inside the if block
+      for (QlangParser.StatementContext stmtCtx : ctx.statement()) {
+         if (!visit(stmtCtx)) {
+               res = false;
+         }
+      }
+      return res;
    }
 
-   @Override public Boolean visitElseifBlock(QlangParser.ElseifBlockContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+   @Override
+   public Boolean visitElseifBlock(QlangParser.ElseifBlockContext ctx) {
+      Boolean res = true;
+      // Check if the expression inside the elseif condition is boolean
+      Type exprType = getTypeByExpression(ctx.expr());
+      if (!(exprType instanceof BooleanType)) {
+         System.out.println("Error: The condition in the elseif statement must be of type boolean.");
+         res = false;
+      }
+      // Visit all the statements inside the elseif block
+      for (QlangParser.StatementContext stmtCtx : ctx.statement()) {
+         if (!visit(stmtCtx)) {
+               res = false;
+         }
+      }
+      return res;
    }
+
+   private Type getTypeByExpression(QlangParser.ExprContext ctx) {
+      // Implement this method to determine the type of the expression.
+      // This is a placeholder for now. You need to implement the logic to evaluate the type.
+      return new BooleanType(); // Example return type for demonstration.
+   }
+
 
    @Override public Boolean visitElseBlock(QlangParser.ElseBlockContext ctx) {
       Boolean res = null;
