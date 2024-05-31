@@ -1,3 +1,50 @@
-Name: User Name
-ID: 1
-Grade: Undefined
+Name: panda
+ID: 12
+Question 1: A atribuição de valor em PIL usa o operador .
+Answer: :=
+Solution: :=
+Grade: 200.0%
+--------------------
+Question 2: Defina a estrutura de dados lista ligada.
+Answer: A
+TUA
+MÃE
+Solution: Undefined
+Grade: null
+--------------------
+Question 3: Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).
+Answer: 
+Solution: Undefined
+Grade: 0.0%
+--------------------
+Question 4: -- PIL code from here
+   n := integer(read "Number: "); -- type conversion: type(expression)
+   write "Number ",n, " is ";
+   ifthen -- = is the comparison operator (as in math)
+      writeln "even"
+   
+   writeln "odd"
+   end;
+   -- PIL code to here
+Answer: n % 2 = 0, 10
+Solution: n % 2 = 0, else
+Grade: 66.66666666666666%
+--------------------
+Question 5: Defina a estrutura de dados lista ligada.
+Answer: A
+T
+M
+Solution: Undefined
+Grade: null
+--------------------
+Question 6: Defina a estrutura de dados lista ligada.
+Answer: lol
+Solution: Undefined
+Grade: null
+--------------------
+Question 7: A atribuição de valor em PIL usa o operador .
+Answer: :=
+Solution: :=
+Grade: 200.0%
+--------------------
+Final Grade: Undefined
