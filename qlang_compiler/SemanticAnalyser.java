@@ -9,14 +9,12 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    private final TextType stringType = new TextType();
    private final IntegerType integerType = new IntegerType();
    private final CodeType codeType = new CodeType();
+   private final FractionType = new FractionType();
    private final QuestionType questionType = new QuestionType();
    private ArrayList<String> navigatingidSet = new ArrayList<String>();
 
    private final RealType realType = new RealType();
-   private final IntegerType integerType = new IntegerType();
-   private final BooleanType booleanType = new BooleanType();
    private final TextType textType = new TextType();
-   private final CodeType codeType = new CodeType();
 
 
 
@@ -97,47 +95,55 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
+   //inserir idset com type no hashmap
    @Override public Boolean visitDeclaration(QlangParser.DeclarationContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //verificar se idset foi declarado do tipo code
    @Override public Boolean visitCode(QlangParser.CodeContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //verificar se idset foi declarado do mesmo tipo que expr (não pode ser question logo não pode ter pontos, tem que ser terminal)
    @Override public Boolean visitIDAssignment(QlangParser.IDAssignmentContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //verificar se idset foi declarado como question
    @Override public Boolean visitNewAssignment(QlangParser.NewAssignmentContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //verificar se idset é terminal (não pode ter pontos)
    @Override public Boolean visitHoleQuestionAssignment(QlangParser.HoleQuestionAssignmentContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //verificar se idset é do tipo question ou code
    @Override public Boolean visitExecution(QlangParser.ExecutionContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //verificar se expr é do tipo text
    @Override public Boolean visitExport(QlangParser.ExportContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
+
 
    @Override public Boolean visitPrintSentence(QlangParser.PrintSentenceContext ctx) {
       Boolean res = null;
@@ -157,12 +163,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
+   //verificar se idset é do tipo code ou do tipo text
    @Override public Boolean visitUsesCodeDefined(QlangParser.UsesCodeDefinedContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
 
+   //nao apagar
    @Override public Boolean visitChoiceCommand(QlangParser.ChoiceCommandContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
@@ -214,8 +222,11 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
+   //segundo integer não pode ser 0 e ver se é fracao ou integer
    @Override public Boolean visitValueExpr(QlangParser.ValueExprContext ctx) {
       Boolean res = null;
+      // eType = integerType;
+      // eType = fractionType
       return visitChildren(ctx);
       //return res;
    }
@@ -226,6 +237,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
+   //??????????
    @Override public Boolean visitParenthesisExpr(QlangParser.ParenthesisExprContext ctx) {
       Boolean res = visit(ctx.expr());
       if (res) {
@@ -236,12 +248,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    @Override public Boolean visitTextExpr(QlangParser.TextExprContext ctx) {
       Boolean res = null;
+      ctx.eType = stringType;
       return visitChildren(ctx);
       //return res;
    }
 
    @Override public Boolean visitExecutionExpr(QlangParser.ExecutionExprContext ctx) {
       Boolean res = null;
+      ctx.eType = fractionType;
       return visitChildren(ctx);
       //return res;
    }
@@ -262,12 +276,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    @Override public Boolean visitStdoutExpr(QlangParser.StdoutExprContext ctx) {
       Boolean res = null;
+      ctx.eType = stringType;
       return visitChildren(ctx);
       //return res;
    }
 
    @Override public Boolean visitTypeExpr(QlangParser.TypeExprContext ctx) {
       Boolean res = null;
+      //switch ver VARIABLETYPES mudar type accordingly
       return visitChildren(ctx);
       //return res;
    }
@@ -291,6 +307,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    @Override public Boolean visitReadExpr(QlangParser.ReadExprContext ctx) {
       Boolean res = null;
+      ctx.eType = stringType;
       return visitChildren(ctx);
       //return res;
    }
@@ -303,11 +320,13 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       return res;
    }
 
+   //verificar se valores numericos
    @Override public Boolean visitExprBinaryRelational(QlangParser.ExprBinaryRelationalContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
    }
+
 
    @Override public Boolean visitIfLineSentence(QlangParser.IfLineSentenceContext ctx) {
       Boolean res = null;
@@ -328,6 +347,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       for (QlangParser.StatementContext stmtCtx : ctx.statement()) {
          if (!visit(stmtCtx)) {
                res = false;
+               break;
          }
       }
       return res;
@@ -337,8 +357,9 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    @Override public Boolean visitElseifBlock(QlangParser.ElseifBlockContext ctx) {
       Boolean res = true;
       // Check if the expression inside the elseif condition is boolean
-      Type exprType = getTypeByExpression(ctx.expr());
-      if (!(exprType instanceof BooleanType)) {
+      Type exprType = ctx.expr().eType;
+      //nao sei se isto esta bem
+      if (!(exprType.conformsTo(new BooleanType()))) {
          System.out.println("Error: The condition in the elseif statement must be of type boolean.");
          res = false;   
       }
@@ -346,16 +367,12 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       for (QlangParser.StatementContext stmtCtx : ctx.statement()) {
          if (!visit(stmtCtx)) {
                res = false;
+               break;
          }
       }
       return res;
    }
 
-   private Type getTypeByExpression(QlangParser.ExprContext ctx) {
-      // Implement this method to determine the type of the expression.
-      // This is a placeholder for now. You need to implement the logic to evaluate the type.
-      return new BooleanType(); // Example return type for demonstration.
-   }
 
 
    @Override public Boolean visitElseBlock(QlangParser.ElseBlockContext ctx) {
