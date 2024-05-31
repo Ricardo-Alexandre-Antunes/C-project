@@ -332,8 +332,8 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       //return res;
    }
 
-      @Override
-   public Boolean visitIfBlock(QlangParser.IfBlockContext ctx) {
+   
+   @Override public Boolean visitIfBlock(QlangParser.IfBlockContext ctx) {
       Boolean res = true;
       // Check if the expression inside the if condition is boolean
       Type exprType = getTypeByExpression(ctx.expr());
@@ -350,8 +350,8 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       return res;
    }
 
-   @Override
-   public Boolean visitElseifBlock(QlangParser.ElseifBlockContext ctx) {
+   
+   @Override public Boolean visitElseifBlock(QlangParser.ElseifBlockContext ctx) {
       Boolean res = true;
       // Check if the expression inside the elseif condition is boolean
       Type exprType = getTypeByExpression(ctx.expr());
