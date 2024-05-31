@@ -8,6 +8,14 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    private ArrayList<String> navigatingidSet = new ArrayList<String>();
 
+   private final RealType realType = new RealType();
+   private final IntegerType integerType = new IntegerType();
+   private final BooleanType booleanType = new BooleanType();
+   private final TextType textType = new TextType();
+   private final CodeType codeType = new CodeType();
+
+
+
    @Override public Boolean visitStatList(QlangParser.StatListContext ctx) {
       Boolean res = null;
       return visitChildren(ctx);
@@ -261,9 +269,11 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    @Override public Boolean visitParenthesisExpr(QlangParser.ParenthesisExprContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+      Boolean res = visit(ctx.expr());
+      if (res) {
+         ctx.eType = ctx.expr().eType;
+      }
+      return res;
    }
 
    @Override public Boolean visitTextExpr(QlangParser.TextExprContext ctx) {
@@ -279,9 +289,17 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    @Override public Boolean visitExprBinaryLogical(QlangParser.ExprBinaryLogicalContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+      Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1));
+      if (res) {
+         if (!"boolean".equals(ctx.expr(0).eType.name()) || !"boolean".equals(ctx.expr(1).eType.name())) {
+            ErrorHandling.printError(ctx, "Logical operator applied to non-boolean operands!");
+            res = false;
+         }
+         else {
+            ctx.eType = booleanType;
+         }
+      }
+      return res;
    }
 
    @Override public Boolean visitStdoutExpr(QlangParser.StdoutExprContext ctx) {
@@ -297,14 +315,19 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    @Override public Boolean visitUnaryExpr(QlangParser.UnaryExprContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+      Boolean res = visit(ctx.expr()) && checkNumericType(ctx, ctx.expr().eType);
+      if (res) {
+         ctx.eType = ctx.expr().eType;
+      }
+      return res;
    }
 
    @Override public Boolean visitExprMultDivMod(QlangParser.ExprMultDivModContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
+      Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1)) && checkNumericType(ctx, ctx.expr(0).eType) && checkNumericType(ctx, ctx.expr(1).eType); 
+      if (res) {
+         ctx.eType = fetchType(ctx.expr(0).eType, ctx.expr(1).eType);
+      }
+      return res;
       //return res;
    }
 
@@ -315,9 +338,11 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    @Override public Boolean visitExprAddMinus(QlangParser.ExprAddMinusContext ctx) {
-      Boolean res = null;
-      return visitChildren(ctx);
-      //return res;
+      Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1)) && checkNumericType(ctx, ctx.expr(0).eType) && checkNumericType(ctx, ctx.expr(1).eType); 
+      if (res) {
+         ctx.eType = fetchType(ctx.expr(0).eType, ctx.expr(1).eType);
+      }
+      return res;
    }
 
    @Override public Boolean visitExprBinaryRelational(QlangParser.ExprBinaryRelationalContext ctx) {
@@ -357,7 +382,7 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       Type exprType = getTypeByExpression(ctx.expr());
       if (!(exprType instanceof BooleanType)) {
          System.out.println("Error: The condition in the elseif statement must be of type boolean.");
-         res = false;
+         res = false;   
       }
       // Visit all the statements inside the elseif block
       for (QlangParser.StatementContext stmtCtx : ctx.statement()) {
@@ -379,5 +404,31 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       Boolean res = null;
       return visitChildren(ctx);
       //return res;
+   }
+
+   private Boolean checkNumericType(ParserRuleContext ctx, Type t) {
+      Boolean res = true;
+      if (!t.isNumeric())
+      {
+         ErrorHandling.printError(ctx, "Numeric operator applied to a non-numeric operand!");
+         res = false;
+      }
+      return res;
+   }
+
+   private Type fetchType(Type t1, Type t2) {
+      Type res = null;
+      if (t1.isNumeric() && t2.isNumeric())
+      {
+         if ("real".equals(t1.name()))
+            res = t1;
+         else if ("real".equals(t2.name()))
+            res = t2;
+         else
+            res = t1;
+      }
+      else if ("boolean".equals(t1.name()) && "boolean".equals(t2.name()))
+         res = t1;
+      return res;
    }
 }
