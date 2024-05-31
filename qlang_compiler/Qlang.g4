@@ -73,7 +73,7 @@ codeholeWithBreak: (codehole ';');
 
 codehole: (Integer ',')? (Integer ',')? (TEXT | idset) ('line' Integer)?;
 
-expr:
+expr returns [Type eType, String varName]:
         '(' expr ')'                                                                            #ParenthesisExpr  
         | expr '|' expr                                                                         #StdoutExpr
         | op=('-' | '+' | 'not') expr                                                           #UnaryExpr
