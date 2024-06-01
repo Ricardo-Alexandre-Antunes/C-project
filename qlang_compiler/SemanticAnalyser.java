@@ -65,21 +65,15 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    @Override
+   // Ricardo : cometi um erro crasso aqui, não é para definir question sets assim
    public Boolean visitIDSetComposition(QlangParser.IDSetCompositionContext ctx) {
       Boolean res = true;
       if (navigatingidSet.contains(ctx.ID().getText())) {
          System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
          res = false;
-      } else if (declaredVariables.containsKey(res)) {
-         if (!declaredVariables.get(res).equals("QuestionSet"))
-            res = false;
-
       } else {
-         declaredVariables.put(ctx.ID().getText(), "QuestionSet");
-      }
-      if (res) {
          navigatingidSet.add(ctx.ID().getText());
-         visit(ctx.idset());
+         res = visit(ctx.idset());
       }
       return res;
       // return res;
@@ -87,33 +81,57 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    // JOAO : Não falta o res no return?
    // Hugo : é capaz
+   /* Ricardo : meus caros a questão / code é definida por 
+               todo o texto do idset; podemos assim, ter, 
+               por exemplo, uma pergunta chamada Bloco1.PerguntaAberta 
+               e outra chamada Bloco2.PerguntaAberta. 
+               Seriam perguntas diferentes e seria nomenclatura válida.
+
+   Fiz alterações para refletir essa possibilidade.
+   */
    @Override
    public Boolean visitNewQuestion(QlangParser.NewQuestionContext ctx) {
-      Boolean res = true;
-      String[] questionSets = ctx.idset().getText().split(".");
-      String trueQuestion = questionSets[questionSets.length - 1];
-      if (declaredVariables.containsKey(trueQuestion)) {
-         if (!declaredVariables.get(trueQuestion).equals(ctx.QUESTIONTYPES().getText()))
-            res = false;
-      } else {
-         declaredVariables.put(trueQuestion, ctx.QUESTIONTYPES().getText());
+      Boolean res = visit(ctx.idset());
+      if (res){
+         String question = ctx.idset().getText();
+         if (declaredVariables.containsKey(question)) {
+            if (declaredVariables.get(question).equals("question")){
+               // Ricardo : Aqui acho que faz mais sentido deixar o utilizador mudar o tipo de questão mas avisar que está a ser feito um override.
+               ErrorHandling.printWarning(ctx, "The question " + question + " had already been declared, and its definition has been overriden");
+            }
+            else {
+               ErrorHandling.registerError();
+               ErrorHandling.printError(ctx, "Cannot assign a question to a non-question declarated variable");
+               res = false;
+            }
+            //if (!declaredVariables.get(question).equals(ctx.QUESTIONTYPES().getText())) res = false;
+         } else {
+            declaredVariables.put(ctx.idset().getText(), "question");
+         }
       }
-      return visitChildren(ctx);
+      return res && visit(ctx.commandComposition());
       // return res && visitChildren(ctx); ============ AQUI =============
    }
 
    // inserir idset com type no hashmap
    // hugo
+   /* Ricardo : Se uma variável já foi declarada, não pode ser declarada de novo (pensem no Java, por exemplo).
+               Sei que vão dizer que ai não fizeste o mesmo para as questões, pois é meus caros gg
+   */
    @Override
    public Boolean visitDeclaration(QlangParser.DeclarationContext ctx) {
       Boolean res = true;
       String idset = ctx.idset().getText();
       String type = "code";
-      if (ctx.VARIABLETYPES() != null)
-         type = ctx.VARIABLETYPES().getText();
+      if (ctx.VARIABLETYPES() != null) type = ctx.VARIABLETYPES().getText();
+      if (idset.contains(".")) {
+         if (type.equals("question") || type.equals("code")) ErrorHandling.printWarning(ctx, "This declaration is redundant, and it will have to be done again");
+      };
 
       if (declaredVariables.containsKey(idset)) {
-         System.out.println("Error: " + idset + " is already declared.");
+         // Ricardo : é suposto utilizarmos a classe ErrorHandling para imprimir erros
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, "Error: " + idset + " was already declared previously.");
          res = false;
       } else {
          declaredVariables.put(idset, type);
@@ -123,16 +141,17 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    }
 
    // verificar se idset foi declarado do tipo code
+   // Ricardo : se não foi declarado ainda deixar passar...
    //hugo
    @Override
    public Boolean visitCode(QlangParser.CodeContext ctx) {
       Boolean res = true;
       String idset = ctx.idset().getText();
-
+      /*
       if (!declaredVariables.containsKey(idset)) {
          System.out.println("Error: " + idset + " has not been declared.");
          res = false;
-      } else if (!"code".equals(declaredVariables.get(idset))) {
+      } else */ if ( declaredVariables.containsKey(idset) && !"code".equals(declaredVariables.get(idset))) {
          System.out.println("Error: " + idset + " is not of type code.");
          res = false;
       }
