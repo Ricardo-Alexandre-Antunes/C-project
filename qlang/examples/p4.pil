@@ -16,5 +16,4 @@ n := integer("1a2b3");
 e := error; -- also error recovery
 if e then
    writeln text(error) -- special conversion (last error error message): "invalid conversion to integer [integer("1a2b3")]"
-end
-
+end;
