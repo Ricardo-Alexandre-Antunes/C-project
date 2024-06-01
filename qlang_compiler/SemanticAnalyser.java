@@ -5,7 +5,10 @@ import java.util.List;
 @SuppressWarnings("CheckReturnValue")
 public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
-   private HashMap<String, String> declaredVariables = new HashMap<String, String>();
+   // Ricardo : mudei o hashmap para podermos utilizar o type adequadamente
+   private HashMap<String, Type> declaredVariables = new HashMap<String, Type>();
+   // ... mas para isso também adicionei um array list para ids que são classes
+   private ArrayList<String> declaredQuestionClasses = new ArrayList<String>();
    private final BooleanType booleanType = new BooleanType();
    private final TextType stringType = new TextType();
    private final IntegerType integerType = new IntegerType();
@@ -16,6 +19,23 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    private final RealType realType = new RealType();
    private final TextType textType = new TextType();
+
+   private Type getTypeByExpression(String type) {
+      switch (type) {
+         case "integer":
+            return integerType;
+         case "real":
+            return realType;
+         case "text":
+            return textType;
+         case "question":
+            return questionType;
+         case "fraction":
+            return fractionType;
+         default:
+            return null;
+      }
+   }
 
    @Override
    public Boolean visitStatList(QlangParser.StatListContext ctx) {
@@ -88,6 +108,8 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
                Seriam perguntas diferentes e seria nomenclatura válida.
 
    Fiz alterações para refletir essa possibilidade.
+
+   NOVO: Como fiz uma lista para classes de questões especificamente, mudei agora aqui também
    */
    @Override
    public Boolean visitNewQuestion(QlangParser.NewQuestionContext ctx) {
@@ -95,18 +117,16 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       if (res){
          String question = ctx.idset().getText();
          if (declaredVariables.containsKey(question)) {
-            if (declaredVariables.get(question).equals("question")){
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Cannot assign a Question Class to a previously declarated variable (even if question type)");
+            res = false;
+         }
+         if (declaredQuestionClasses.contains(question)) {
                // Ricardo : Aqui acho que faz mais sentido deixar o utilizador mudar o tipo de questão mas avisar que está a ser feito um override.
                ErrorHandling.printWarning(ctx, "The question " + question + " had already been declared, and its definition has been overriden");
-            }
-            else {
-               ErrorHandling.registerError();
-               ErrorHandling.printError(ctx, "Cannot assign a question to a non-question declarated variable");
-               res = false;
-            }
             //if (!declaredVariables.get(question).equals(ctx.QUESTIONTYPES().getText())) res = false;
          } else {
-            declaredVariables.put(ctx.idset().getText(), "question");
+            declaredQuestionClasses.put(ctx.idset().getText());
          }
       }
       return res && visit(ctx.commandComposition());
@@ -134,7 +154,12 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
          ErrorHandling.printError(ctx, "Error: " + idset + " was already declared previously.");
          res = false;
       } else {
-         declaredVariables.put(idset, type);
+         if (getTypeByExpression(type) == null) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Error: " + type + " is not a valid type.");
+            res = false;
+         }
+         declaredVariables.put(idset, getTypeByExpression(type));
       }
 
       return res;
@@ -161,8 +186,9 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       // return res;
    }
 
-   // se o idset tiver . entao o expr tem que ser uma question senao tem que ter o
+   // se o idset tiver . entao o expr tem que ser uma question / code senao tem que ter o
    // mesmo tipo que expr
+   // Ricardo : ok sou burro. já tinha que ser declarado.
    // hugo
    @Override
    public Boolean visitIDAssignment(QlangParser.IDAssignmentContext ctx) {
@@ -171,28 +197,35 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       // isto pode estar mal
       Type exprType = ctx.expr().eType;
 
-      // Visit the expression to determine its type
+      // Visitar a expressão para **ver se é válida**
       res = visit(ctx.expr());
-
+      // Se não for válida, não vale a pena continuar.
+      if (!res) return false;
+      /*
       if (idset.contains(".")) {
          // If idset contains a dot, expr must be of type 'question'
-         if (!"question".equals(exprType.name())) {
-            System.out.println("Error: The expression assigned to " + idset + " must be of type 'question'. Found: "
-                  + exprType.name());
+         if (!"question".equals(exprType.name()) && !"code".equals(exprType.name())) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Assignment mismatch: " + exprType.name());
             res = false;
          }
-      } else {
+      } else */ {
          // Check if idset has been declared
          if (!declaredVariables.containsKey(idset)) {
-            System.out.println("Error: " + idset + " has not been declared.");
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, idset + " has not been declared prior to assignment.");
             res = false;
          } else {
             // Check if the type of idset matches the type of the expression
-            String idsetType = declaredVariables.get(idset);
+            Type idsetType = declaredVariables.get(idset);
             if (!idsetType.equals(exprType.name())) {
-               System.out.println(
-                     "Error: Type mismatch for " + idset + ". Expected: " + idsetType + ", Found: " + exprType.name());
-               res = false;
+               if (idsetType.conformsTo(exprType)){
+                  ErrorHandling.printWarning(ctx, "Assignment mismatch - Expected " + idsetType + " but found " + exprType.name() + ". However, assignment was still possible.");
+               } else {
+                  ErrorHandling.registerError();
+                  ErrorHandling.printError(ctx, "Assignment Mismatch - Expected " + idsetType + " but found " + exprType.name());
+                  res = false;
+               }
             }
          }
       }
