@@ -252,47 +252,16 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
       Boolean res = visit(ctx.expr());
       String text = ctx.expr().getText();
 
-      final String REGEX_INT = "^-?\\d+$";
-      final String REGEX_DOUBLE = "^-?\\d+(\\.\\d+)?$";
-
       if (text.startsWith("read")) {
          return res;
       }
 
-      if (res) {
-         String type = ctx.type.getText();
-         if ("integer".equals(type)) {
-            if (ctx.expr().eType.isNumeric() || Pattern.matches(REGEX_INT, text)) {
-               ctx.eType = integerType;
-            }
-            else {
-               ErrorHandling.printError(ctx, "Invalid type conversion!");
-               res = false;
-            }
-         }
-         else if ("real".equals(type)) {
-            if (ctx.expr().eType.isNumeric() || Pattern.matches(REGEX_DOUBLE, text)) {
-               ctx.eType = realType;
-            }
-            else {
-               ErrorHandling.printError(ctx, "Invalid type conversion!");
-               res = false;
-            }
-         }
-         else if ("text".equals(type)) {
-            if (ctx.expr().eType.isNumeric()) {
-               ctx.eType = textType;
-            }
-            else {
-               ErrorHandling.printError(ctx, "Invalid type conversion!");
-               res = false;
-            }
-         }
-         else {
-            ErrorHandling.printError(ctx, "Invalid type conversion!");
-            res = false;
-         }
-      }
+      return res;
+   }
+
+   @Override public Boolean visitExprError(PilParser.ExprErrorContext ctx) {
+      Boolean res = true;
+      ctx.eType = booleanType;
       return res;
    }
 

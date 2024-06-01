@@ -34,7 +34,8 @@ expr returns [Type eType, String varName]:
     | TEXT                                                                      #ExprText   
     | BOOLEAN                                                                   #ExprBoolean                              
     | type=TYPES '(' expr ')'                                                   #ExprTypeConversion
-    | 'read' expr                                                               #ExprRead                                  
+    | 'read' expr                                                               #ExprRead      
+    | 'error'                                                                   #ExprError                                                  
     ;
 
 idset: ID ;  

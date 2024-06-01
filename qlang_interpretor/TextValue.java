@@ -41,8 +41,7 @@ public class TextValue extends Value {
             if (Pattern.matches(REGEX_INT, val)) {
                 return new IntegerValue(Integer.parseInt(val));
             } 
-            else {
-                ErrorHandling.printError("Invalid type conversion!");
+            else { 
                 return null;
             }
         } 
@@ -51,7 +50,6 @@ public class TextValue extends Value {
                 return new RealValue(Double.parseDouble(val));
             } 
             else {
-                ErrorHandling.printError("Invalid type conversion!");
                 return null;
             }
         } 
