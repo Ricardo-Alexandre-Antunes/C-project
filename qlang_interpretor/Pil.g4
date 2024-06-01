@@ -1,6 +1,6 @@
 grammar Pil ;
 
-program: statementComposition  EOF ;     
+program: statementComposition?  EOF ;     
 
 statementComposition: statementWithBreak* (statement | statementWithBreak) ;
 
@@ -34,12 +34,11 @@ expr returns [Type eType, String varName]:
     | TEXT                                                                      #ExprText   
     | BOOLEAN                                                                   #ExprBoolean                              
     | type=TYPES '(' expr ')'                                                   #ExprTypeConversion
-    | 'read' expr                                                               #ExprRead                                  
+    | 'read' expr                                                               #ExprRead      
+    | 'error'                                                                   #ExprError                                                  
     ;
 
-idset: ID               #IdsetID
-      | ID '.' idset    #IdsetRecursive
-      ;  
+idset: ID ;  
 
 BOOLEAN: 'true' | 'false' ;
 TYPES: 'integer' | 'real' | 'text' ;
