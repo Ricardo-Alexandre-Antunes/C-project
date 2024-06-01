@@ -92,8 +92,8 @@ literalBoolean(value) ::= "<booleanValue.(value)>"
 
 stringArray(var, text) ::= "String[] <var> = {<text; separator=", ">} 
 
-NewQuestion(type, var, question, solution, grades, id) ::= <%
-   QuestionInterface <var> = new <questionType.(type)>(result, <question>, <if(solution)> <solution> <endif>, <if(grades)> <grades> <endif> ,<id>)
+NewQuestion(type, var, question, code, solution, grades, id) ::= <%
+   QuestionInterface <var> = new <questionType.(type)>(result, <question>, <if(code)> <code> <endif>, <if(solution)> <solution> <endif>, <if(grades)> <grades> <endif> ,<id>)
 %>
 
 NewQuestionManager(type, id) ::= <%

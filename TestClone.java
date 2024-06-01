@@ -92,10 +92,15 @@ class Forms {
                     w.write("ID: " + this.getId() + "\n");
                 }
                 for (int question = 1; question <= this.questions.size(); question++) {
+                    
                     w.write("Question " + question + ": " + this.questions.get(question - 1) + "\n");
                     w.write("Answer: " + this.answers.get(question - 1) + "\n");
                     w.write("Solution: " + this.solutions.get(question - 1) + "\n");
-                    w.write("Grade: " + this.grades.get(question - 1) + "\n");
+                    if (this.grades.get(question - 1) != null) {
+                        w.write("Grade: " + this.grades.get(question - 1) + "\n");
+                    } else {
+                        w.write("Grade: Undefined\n");
+                    }
                     w.write("--------------------\n");
                 }
                 w.write("Final Grade: " + ((this.grade == null) ? "Undefined" : this.grade) + "\n");
@@ -380,15 +385,15 @@ class Forms {
     public static class CodeOpenQuestion extends Question {
         private String question;
         private Code answer;
-        private String solutionFile;
+        private Code solution;
         private String inputFilePath;
         private Fraction score;
         private CodeOpenQuestion clone;
 
-        public CodeOpenQuestion(Result result, String question, String solutionFile, String id) {
+        public CodeOpenQuestion(Result result, String question, String solution, String id) {
             super(result, id);
             this.question = question;
-            this.solutionFile = solutionFile;
+            this.solution = new Code(solution);
             this.answer = new Code("");
             this.inputFilePath = "CodeOpenQuestionInputFile.txt";
             this.score = new Fraction(0, 1); // Initialize with a valid fraction
@@ -415,7 +420,7 @@ class Forms {
 
         @Override
         public Fraction execute(Scanner scanner) {
-            clone = new CodeOpenQuestion(super.getResult(), this.question, this.solutionFile, this.getQuestionId());
+            clone = new CodeOpenQuestion(super.getResult(), this.question, this.solution.getCode(), this.getQuestionId());
             return clone.run(scanner);
         }
 
@@ -438,11 +443,11 @@ class Forms {
             // Read the user's code and the solution code and compare them
             try {
                 String userCode = new String(Files.readAllBytes(Paths.get(inputFilePath))).strip();
-                String solutionCode = new String(Files.readAllBytes(Paths.get(solutionFile))).strip();
 
                 answer = new Code(userCode);
+                String solution_str = solution.getCode();
 
-                if (solutionCode.equals(this.answer.getCode())) {
+                if (solution_str.equals(this.answer.getCode())) {
                     System.out.println("Your code matches the solution!");
                     rightAnswer();
                 } else {
@@ -484,19 +489,21 @@ class Forms {
     }
 
     public static class CodeHoleQuestion extends Question {
-        String[] question;
+        String[] code;
         String[] solution;
         String[] answer;
         String[] grades;
+        String question;
         int denominator;
         int numerator;
         Fraction score;
         CodeHoleQuestion clone;
 
-        public CodeHoleQuestion(Result result, String[] question, String[] solution, String[] grades, String id) {
+        public CodeHoleQuestion(Result result, String question, String[] code, String[] solution, String[] grades, String id) {
             super(result, id);
             this.question = question;
             this.solution = solution;
+            this.code = code;
             this.answer = new String[solution.length];
             this.grades = grades;
             this.numerator = 0;
@@ -534,20 +541,21 @@ class Forms {
 
         @Override
         public Fraction execute(Scanner scanner) {
-            clone = new CodeHoleQuestion(super.getResult(), this.question, this.solution, this.grades,
+            System.out.println("\n"+this.getQuestion());
+            clone = new CodeHoleQuestion(super.getResult(), this.question, this.code, this.solution, this.grades,
                     this.getQuestionId());
             return clone.run(scanner);
         }
 
         public Fraction run(Scanner scanner) {
-            StringBuilder questionText = new StringBuilder();
-            for (int i = 0; i < question.length; i++) {
-                questionText.append(question[i]);
-                if (i < question.length - 1) {
-                    questionText.append(" __" + (i + 1) + "__ ");
+            StringBuilder codeText = new StringBuilder();
+            for (int i = 0; i < code.length; i++) {
+                codeText.append(code[i]);
+                if (i < code.length - 1) {
+                    codeText.append(" __" + (i + 1) + "__ ");
                 }
             }
-            System.out.println(questionText.toString());
+            System.out.println(codeText.toString());
 
             for (int i = 0; i < answer.length; i++) {
                 System.out.print((i + 1) + " - ");
@@ -570,7 +578,7 @@ class Forms {
 
         @Override
         public String getQuestion() {
-            return String.join("", question);
+            return this.question;
         }
 
         public String getSolution() {
@@ -691,7 +699,7 @@ class Forms {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Result result = new Result(); // Placeholder for user name and ID
-        String filename = "result.txt", evenOddQuestion, codeOpenFileName;
+        String filename = "result.txt", evenOddQuestion, codeSolution;
         String name;
         int id;
         Fraction f1;
@@ -723,13 +731,14 @@ class Forms {
 
         // CodeOpenQuestion
         evenOddQuestion = "Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).";
-        codeOpenFileName = "CodeOpenTestFile.txt";
-        q3 = new CodeOpenQuestion(result, evenOddQuestion, codeOpenFileName, "A.B.D");
+        codeSolution = "if ricardo := gay then: lgbt";
+        q3 = new CodeOpenQuestion(result, evenOddQuestion, codeSolution, "A.B.D");
         questionManager_B.addQuestion(q3);
         q3.execute(scanner);
 
         // CodeHoleQuestion
-        String[] question4 = new String[] {
+        String question4 = "Complete o seguinte código.";
+        String[] code = new String[] {
                 "-- PIL code from here\n" +
                         "   n := integer(read \"Number: \"); -- type conversion: type(expression)\n" +
                         "   write \"Number \",n, \" is \";\n" +
@@ -744,7 +753,7 @@ class Forms {
         };
         String[] solution4 = new String[] { "n % 2 = 0", "else" };
         String[] grades4 = new String[] { "10", "5" };
-        q4 = new CodeHoleQuestion(result, question4, solution4, grades4, "A.P");
+        q4 = new CodeHoleQuestion(result, question4, code, solution4, grades4, "A.P");
         questionManager_A.addQuestion(q4);
         q4.execute(scanner);
 
