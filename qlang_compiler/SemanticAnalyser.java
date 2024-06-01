@@ -78,7 +78,8 @@
       public Boolean visitIDSetTerminal(QlangParser.IDSetTerminalContext ctx) {
          Boolean res = true;
          if (navigatingidSet.contains(ctx.ID().getText())) {
-            System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, ctx.ID().getText() + " is already declared in this set.");
             res = false;
          } else {
             navigatingidSet.clear();
@@ -91,7 +92,8 @@
       public Boolean visitIDSetComposition(QlangParser.IDSetCompositionContext ctx) {
          Boolean res = true;
          if (navigatingidSet.contains(ctx.ID().getText())) {
-            System.out.println("Error: " + ctx.ID().getText() + " is already declared in this set.");
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, ctx.ID().getText() + " is already declared in this set.");
             res = false;
          } else {
             navigatingidSet.add(ctx.ID().getText());
@@ -125,6 +127,7 @@
             }
             if (declaredQuestionClasses.contains(question)) {
                   // Ricardo : Aqui acho que faz mais sentido deixar o utilizador mudar o tipo de questão mas avisar que está a ser feito um override.
+                  ErrorHandling.registerError();
                   ErrorHandling.printWarning(ctx, "The question " + question + " had already been declared, and its definition has been overriden");
                //if (!declaredVariables.get(question).equals(ctx.QUESTIONTYPES().getText())) res = false;
             } else {
@@ -150,21 +153,21 @@
          // Ricardo : declarar uma variavel com . não faz sentido. É uma classe que deve ser inicializada de outra forma
          if (idset.contains(".")) {
             ErrorHandling.registerError();
-            ErrorHandling.printError(ctx, "Error: " + idset + " cannot be declared with a dot (reserved for question class definitions)");
+            ErrorHandling.printError(ctx, idset + " cannot be declared with a dot (reserved for question class definitions)");
             res = false;
          } else {
             // Verificar se a variável já foi declarada
             if (declaredVariables.containsKey(idset)) {
                   // Utilizar a classe ErrorHandling para imprimir erros
                   ErrorHandling.registerError();
-                  ErrorHandling.printError(ctx, "Error: " + idset + " was already declared previously.");
+                  ErrorHandling.printError(ctx, idset + " was already declared previously.");
                   res = false;
             } else {
                   // Verificar se o tipo é válido
                   Type variableType = getTypeByExpression(type);
                   if (variableType == null) {
                      ErrorHandling.registerError();
-                     ErrorHandling.printError(ctx, "Error: " + type + " is not a valid type.");
+                     ErrorHandling.printError(ctx, type + " is not a valid type.");
                      res = false;
                   } else {
                      // Adicionar a variável ao mapa de variáveis declaradas
@@ -277,7 +280,7 @@
          
          // Verificar se o primeiro idset foi declarado e é do tipo 'question'
          if (!declaredVariables.containsKey(firstIdset)) {
-            ErrorHandling.printError(ctx, "Error: " + firstIdset + " has not been declared.");
+            ErrorHandling.printError(ctx, firstIdset + " has not been declared.");
             return false;
          } /* else if (!"question".equals(declaredVariables.get(firstIdset))) {
             System.out.println("Error: " + firstIdset + " is not of type 'question'.");
@@ -306,18 +309,18 @@
          if (declaredQuestionClasses.contains(secondIdset)) {
             if (!"question".equals(declaredVariables.get(firstIdset).name())) {
                ErrorHandling.registerError();
-               ErrorHandling.printError(ctx, "Error: " + firstIdset + " is not a question.");
+               ErrorHandling.printError(ctx,  firstIdset + " is not a question.");
                return false;
             }
          } else if (declaredCodeClasses.contains(secondIdset)) {
             if (!"code".equals(declaredVariables.get(firstIdset).name())) {
                ErrorHandling.registerError();
-               ErrorHandling.printError(ctx, "Error: " + firstIdset + " is not a code.");
+               ErrorHandling.printError(ctx,  firstIdset + " is not a code.");
                return false;
             }
          } else {
             ErrorHandling.registerError();
-            ErrorHandling.printError(ctx, "Error: " + secondIdset + " is not a valid question or code class.");
+            ErrorHandling.printError(ctx,  secondIdset + " is not a valid question or code class.");
             return false;
          }
 
@@ -373,16 +376,32 @@
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, idset + " is not a valid question or code class.");
             return false;  
+         //mas o que e que estas a fazer?
+         //Rodrigo: Ricardo dá indicações
+         // comecem a fazer siga grind
+         // eu ja fiz e refiz todos tu e que tens de dizer o que ta mal
+         // um de vocês faz o export o outro o print sentence e por aí em diante
+         // Rodrigo: eu faço o export :skull
+         // não sei o que está mal até ver :skull:
+         // hugo: tou clueless
+         
          }
          if (!declaredVariables.containsKey(idset)) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, idset + " has not been declared.");
-            res = false;
+            return false;
          } else {
             Type idsetType = declaredVariables.get(idset);
+            if (ctx.init != null) {
+               ErrorHandling.registerError();
+               ErrorHandling.printError(ctx, idset + " is not a question-class or code-class.");
+               return false;
+            }
             if (!"question".equals(idsetType.name()) && !"code".equals(idsetType.name())) {
-               ErrorHandling.printError(ctx, "Error: " + idset + " must be of type 'question' or 'code'.");
-               res = false;
+               //olha tira o "Error: " de todo  o lado a funcao já faz Error
+               ErrorHandling.registerError();
+               ErrorHandling.printError(ctx, idset + " must be of type 'question' or 'code'.");
+               return false;
             }
          }
 
@@ -394,22 +413,26 @@
       // JOAO : Aqui tb n se devia verficiar se o idset é do tipo Result? (que é o
       // único que faz export)
       // Hugo eu acho que sim
+      //estou a ver não garanto que esteja mal ou bem
       @Override
       public Boolean visitExport(QlangParser.ExportContext ctx) {
          Boolean res = true;
          String idset = ctx.idset().getText();
-
+         
          if (!declaredVariables.containsKey(idset)) {
-            ErrorHandling.printError(ctx, "Error: " + idset + " has not been declared.");
-            res = false;
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx,  idset + " has not been declared.");
+            return false;
          }
 
          res = res && visit(ctx.expr());
+         if (!res) return res;
          Type exprType = ctx.expr().eType;
 
          if (!"text".equals(exprType.name())) {
-            ErrorHandling.printError(ctx, "Error: The expression must be of type 'text'. Found: " + exprType.name());
-            res = false;
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx,  "The expression must be of type 'text'. Found: " + exprType.name());
+            return false;
          }
 
          return res;
@@ -418,6 +441,13 @@
       @Override
       public Boolean visitPrintSentence(QlangParser.PrintSentenceContext ctx) {
          Boolean res = null;
+         String idset = ctx.idset().getText();
+         
+         if (!declaredVariables.containsKey(idset)) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx,  idset + " has not been declared.");
+            return false;
+         }
          return visitChildren(ctx);
          // return res;
       }
@@ -436,8 +466,16 @@
          // return res;
       }
 
-      // verificar se idset é do tipo code ou do tipo text
-
+      // verificar se idset é do tipo code ou do tipo text porque é que eu disse isto gg
+      // vai dormir ze eu ja nao fiz o qlang e tu ainda por cima dizes indicacoes erradas
+      // olha, faco oq agora?
+      // se quiserem começar o léxico enquanto eu revejo isto ainda não têm o ST todo mas dá para começar
+      // acho melhor dizeres o que está mal
+      // preciso de ver :skull:
+      // ver exemplo do professor
+      // ou a minha resolução da tabela html
+      // eu para comecar o lexico preciso de um tutorial que eu nao andei a fazer nada disso
+      // pois por isso e que tou a dizer era mais facil aq mas ya
       // JOAO
       @Override
       public Boolean visitUsesCodeDefined(QlangParser.UsesCodeDefinedContext ctx) {
@@ -445,13 +483,15 @@
          String idset = ctx.idset().getText();
 
          if (!declaredVariables.containsKey(idset)) {
+            ErrorHandling.registerError();
             ErrorHandling.printError(ctx, "Erystem.out.pror: " + idset + " has not been declared.");
             res = false;
          } else {
-            String idsetType = declaredVariables.get(idset);
-            if (!"code".equals(idsetType) && !"text".equals(idsetType)) {
-               ErrorHandling.printError(ctx, "Error: " + idset + " must be of type 'code' or 'text'. Found: " + idsetType);
-               res = false;
+            String idsetType = declaredVariables.get(idset).name();
+            if (!"code".equals(idsetType)) {
+               ErrorHandling.registerError();
+               ErrorHandling.printError(ctx, idset + " must be of type 'code'. Found: " + idsetType);
+               return false;
             }
          }
 
@@ -477,7 +517,7 @@
          return visitChildren(ctx);
          // return res;
       }
-
+      
       // comeca aqui -> Hugo
       @Override
       public Boolean visitIfLineSentenceCommand(QlangParser.IfLineSentenceCommandContext ctx) {
@@ -527,40 +567,28 @@
       // Hugo para de por VisitChildren em tudo ze
       @Override
       public Boolean visitValueExpr(QlangParser.ValueExprContext ctx) {
+         //isto afinal é no runtime confirmei com o eduardo
          Boolean res = true;
-
-         // Get the integer parts of the value expression
-         List<TerminalNode> integers = ctx.Integer();
-
-         if (integers.size() == 1) {
-            // Single integer, so it is an integer type
-            ctx.eType = integerType;
-         } else if (integers.size() == 2) {
-            // Fraction case
-            int numerator = Integer.parseInt(integers.get(0).getText());
-            int denominator = Integer.parseInt(integers.get(1).getText());
-
-            if (denominator == 0) {
-               ErrorHandling.printError(ctx, "Error: Denominator cannot be zero.");
-               res = false;
-            } else {
-               ctx.eType = fractionType;
-            }
-         } else {
-            res = false; // This case should not occur if the grammar is correct
-         }
-
-         return res;
+         if (ctx.Integer(1) == null) ctx.eType = integerType;
+         else ctx.eType = fractionType;
+         return true;
       }
 
       @Override
       public Boolean visitIDExpr(QlangParser.IDExprContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = visit(ctx.idset());
+         if (res) {
+            ctx.eType = ctx.idset().eType;
+         }
+         return res;
          // return res;
       }
 
       // ??????????
+      //ricardo e para fazer um interpreter agora? era isso que tavas a dizer?
+      // sim basicamente mas o que vai fazer é spammar ST
+      //
+      //O ETYPE ESQUECIME DE VER
       @Override
       public Boolean visitParenthesisExpr(QlangParser.ParenthesisExprContext ctx) {
          Boolean res = visit(ctx.expr());
@@ -574,7 +602,7 @@
       public Boolean visitTextExpr(QlangParser.TextExprContext ctx) {
          Boolean res = null;
          ctx.eType = stringType;
-         return visitChildren(ctx);
+         return true;
          // return res;
       }
 
@@ -591,6 +619,7 @@
          Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1));
          if (res) {
             if (!"boolean".equals(ctx.expr(0).eType.name()) || !"boolean".equals(ctx.expr(1).eType.name())) {
+               ErrorHandling.registerError();
                ErrorHandling.printError(ctx, "Logical operator applied to non-boolean operands!");
                res = false;
             } else {
@@ -600,9 +629,27 @@
          return res;
       }
 
+
+      //requisitos desejáveis (acho) nvm gg
+      //não tenho a certeza decidam
+      //náo
+
+      // antlr4-visitor STBuilder ST
       @Override
       public Boolean visitStdoutExpr(QlangParser.StdoutExprContext ctx) {
          Boolean res = null;
+         if (!"text".equals(ctx.expr(0).eType.name())) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "The input to a code block must be in the text format.");
+            return false;
+            //tens de clicar no pin para te libertares
+         }
+
+         if (!"text".equals(ctx.expr(0).eType.name())) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "The input to a code block must be in the text format.");
+            return false;
+         }
          ctx.eType = stringType;
          return visitChildren(ctx);
          // return res;
@@ -633,7 +680,9 @@
                   ctx.eType = fractionType;
                   break;
             default:
-                  System.out.println("Error: Unknown type " + variableType);
+                  ErrorHandling.registerError();
+                  //senhor easter egg
+                  ErrorHandling(ctx, "Achievement Unlocked: How did we get here?");
                   res = false;
                   break;
          }
@@ -644,6 +693,11 @@
 
       @Override
       public Boolean visitUnaryExpr(QlangParser.UnaryExprContext ctx) {
+         if (ctx.op.getText().equals("not") && !"boolean".equals(ctx.expr().eType.name())) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Trying to negate a boolean, but turns out it's a " + ctx.expr().eType.name());
+            return false;
+         }
          Boolean res = visit(ctx.expr()) && checkNumericType(ctx, ctx.expr().eType);
          if (res) {
             ctx.eType = ctx.expr().eType;
@@ -701,7 +755,8 @@
       
             // Check if both types are numeric
             if (!leftType.isNumeric() || !rightType.isNumeric()) {
-                  ErrorHandling.printError(ctx, "Error: Both operands of a binary relational expression must be numeric. Found: "
+                  ErrorHandling.registerError();
+                  ErrorHandling.printError(ctx, " Both operands of a binary relational expression must be numeric. Found: "
                         + leftType.name() + " and " + rightType.name());
                   res = false;
             } else {
@@ -729,7 +784,8 @@
          // Check if the expression inside the if condition is boolean
          Type exprType = getTypeByExpression(ctx.expr());
          if (!(exprType instanceof BooleanType)) {
-            ErrorHandling.printError(ctx, "Error: The condition in the if statement must be of type boolean.");
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, " The condition in the if statement must be of type boolean.");
             res = false;
          }
          // Visit all the statements inside the if block
@@ -749,7 +805,8 @@
          Type exprType = ctx.expr().eType;
          // nao sei se isto esta bem
          if (!(exprType.conformsTo(new BooleanType()))) {
-            ErrorHandling.printError(ctx, "Error: The condition in the elseif statement must be of type boolean.");
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, " The condition in the elseif statement must be of type boolean.");
             res = false;
          }
          // Visit all the statements inside the elseif block
@@ -772,6 +829,7 @@
       private Boolean checkNumericType(ParserRuleContext ctx, Type t) {
          Boolean res = true;
          if (!t.isNumeric()) {
+            ErrorHandling.registerError();
             ErrorHandling.printError(ctx, "Numeric operator applied to a non-numeric operand!");
             res = false;
          }
