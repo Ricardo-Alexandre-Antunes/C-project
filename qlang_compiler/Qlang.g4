@@ -47,7 +47,7 @@ assignment:
         ;
 
 execution:
-        'execute' (expr',')? ('new')? idset
+        'execute' (expr',')? (init=('new'))? idset
         ;
 
 

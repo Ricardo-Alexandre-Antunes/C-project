@@ -9,6 +9,8 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    private HashMap<String, Type> declaredVariables = new HashMap<String, Type>();
    // ... mas para isso também adicionei um array list para ids que são classes
    private ArrayList<String> declaredQuestionClasses = new ArrayList<String>();
+   // ... ... e outra para code-classe
+   private ArrayList<String> declaredCodeClasses = new ArrayList<String>();
    private final BooleanType booleanType = new BooleanType();
    private final TextType stringType = new TextType();
    private final IntegerType integerType = new IntegerType();
@@ -144,8 +146,11 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       String idset = ctx.idset().getText();
       String type = "code";
       if (ctx.VARIABLETYPES() != null) type = ctx.VARIABLETYPES().getText();
+      // Ricardo : declarar uma variavel com . não faz sentido. É uma classe que deve ser inicializada de outra forma
       if (idset.contains(".")) {
-         if (type.equals("question") || type.equals("code")) ErrorHandling.printWarning(ctx, "This declaration is redundant, and it will have to be done again");
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, "Error: " + idset + " cannot be declared with a dot (reserved for question class definitions)");
+         res = false;
       };
 
       if (declaredVariables.containsKey(idset)) {
@@ -167,6 +172,11 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    // verificar se idset foi declarado do tipo code
    // Ricardo : se não foi declarado ainda deixar passar...
+   /* UPDATE Ricardo : com a separção adequada entre classes e variáveis, 
+                     apenas temos que ver se esta variável está incluida na 
+                     lista de questões-classe para imprimir erro, ou na lista 
+                     de código-classe para imprimir aviso
+   */
    //hugo
    @Override
    public Boolean visitCode(QlangParser.CodeContext ctx) {
@@ -176,10 +186,15 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       if (!declaredVariables.containsKey(idset)) {
          System.out.println("Error: " + idset + " has not been declared.");
          res = false;
-      } else */ if ( declaredVariables.containsKey(idset) && !"code".equals(declaredVariables.get(idset))) {
-         System.out.println("Error: " + idset + " is not of type code.");
-         res = false;
+      } else */ if ( declaredQuestionClasses.contains(idset)) {
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, idset + " was already declared - and it's not a class of type Code.");
+         return false;
       }
+      if ( declaredCodeClasses.contains(idset)) {
+         ErrorHandling.printWarning(ctx, idset + " was already declared, but its previous definition is being overriden.");
+      }
+      declaredCodeClasses.add(idset);
 
       return true;
       // Ha um problema com o pil assignemnt (muito avancado)
@@ -237,6 +252,11 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
    // verificar se primeiro idset e do tipo question e se o segundo idset e do tipo
    // question class ou seja multi choice, hole, open, code hole, code open,
    // code-output ou composed
+   /* Ricardo : com os novos array lists, é mais fácil fazer esta verificação
+               agora basta ver se o segundo idset está na lista de classes de questões
+               ou na lista de classes de code
+               e depois ver se o primeiro idset é uma questão ou code accordingly
+   */
    // hugo
    @Override
    public Boolean visitNewAssignment(QlangParser.NewAssignmentContext ctx) {
@@ -244,14 +264,17 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
       String firstIdset = ctx.idset(0).getText();
       String secondIdset = ctx.idset(1).getText();
 
+      
       // Verificar se o primeiro idset foi declarado e é do tipo 'question'
       if (!declaredVariables.containsKey(firstIdset)) {
          System.out.println("Error: " + firstIdset + " has not been declared.");
-         res = false;
-      } else if (!"question".equals(declaredVariables.get(firstIdset))) {
+         return false;
+      } /* else if (!"question".equals(declaredVariables.get(firstIdset))) {
          System.out.println("Error: " + firstIdset + " is not of type 'question'.");
          res = false;
       }
+
+      
 
       // Verificar se o segundo idset é um dos tipos permitidos
       if (res) {
@@ -267,6 +290,25 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
                System.out.println("Error: " + secondIdset + " must be of type 'multi-choice', 'hole', 'open', 'code-hole', 'code-open', 'code-output' or 'composed'. Found: " + secondIdsetType);
                res = false;
          }
+      }
+      */
+
+      if (declaredQuestionClasses.contains(secondIdset)) {
+         if (!"question".equals(declaredVariables.get(firstIdset).name())) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Error: " + firstIdset + " is not a question.");
+            return false;
+         }
+      } else if (declaredCodeClasses.contains(secondIdset)) {
+         if (!"code".equals(declaredVariables.get(firstIdset).name())) {
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Error: " + firstIdset + " is not a code.");
+            return false;
+         }
+      } else {
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, "Error: " + secondIdset + " is not a valid question or code class.");
+         return false;
       }
 
       return res;
@@ -284,19 +326,23 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
       // Visit the expression to determine its type
       res = visit(ctx.expr());
+      if (!res) return false;
 
       // Verificar se idset é terminal (não pode ter pontos)
       if (idset.contains(".")) {
-         System.out.println("Error: The idset " + idset + " must be terminal and cannot contain dots.");
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, "The local variable " + idset + " must not be a question-class or code-class.");
          res = false;
       }
 
-      // Verificar se expr é do tipo 'code-hole'
+      // Verificar se expr é do tipo 'code-hole' | Ricardo : NÃO!!!!!!
+      /*
       if (!"code-hole".equals(exprType.name())) {
          System.out.println("Error: The expression assigned to " + idset + " must be of type 'code-hole'. Found: "
                   + exprType.name());
          res = false;
       }
+      */
 
       return res;
    }
@@ -305,17 +351,26 @@ public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
 
    // JOAO
    // hugo, nao era preciso aquilo
+   // Ricardo : alterei ligeiramente a gramática para sabermos se o 'new' está no execute
+   //          Se estiver, quer dizer que tem que ser uma classe. 
+   //          Se não estiver, tem que ser uma variável do tipo question ou code
    @Override
    public Boolean visitExecution(QlangParser.ExecutionContext ctx) {
       Boolean res = true;
       String idset = ctx.idset().getText();
 
+      if (ctx.init != null && (!declaredQuestionClasses.contains(idset) && !declaredCodeClasses.contains(idset))){
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, idset + " is not a valid question or code class.");
+         return false;  
+      }
       if (!declaredVariables.containsKey(idset)) {
-         System.out.println("Error: " + idset + " has not been declared.");
+         ErrorHandling.registerError();
+         ErrorHandling.printError(ctx, idset + " has not been declared.");
          res = false;
       } else {
-         String idsetType = declaredVariables.get(idset);
-         if (!"question".equals(idsetType) && !"code".equals(idsetType)) {
+         Type idsetType = declaredVariables.get(idset);
+         if (!"question".equals(idsetType.name()) && !"code".equals(idsetType.name())) {
             System.out.println("Error: " + idset + " must be of type 'question' or 'code'.");
             res = false;
          }
