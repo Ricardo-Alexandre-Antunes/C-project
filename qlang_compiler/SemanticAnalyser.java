@@ -2,6 +2,7 @@
    import java.util.HashMap;
    import java.util.List;
    import org.antlr.v4.runtime.ParserRuleContext;
+   import org.antlr.v4.runtime.tree.TerminalNode;
 
    @SuppressWarnings("CheckReturnValue")
    public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
@@ -13,7 +14,6 @@
       // ... ... e outra para code-classe
       private ArrayList<String> declaredCodeClasses = new ArrayList<String>();
       private final BooleanType booleanType = new BooleanType();
-      private final TextType stringType = new TextType();
       private final IntegerType integerType = new IntegerType();
       private final CodeType codeType = new CodeType();
       private final FractionType fractionType = new FractionType();
@@ -243,16 +243,14 @@
       // hugo
       @Override
       public Boolean visitIDAssignment(QlangParser.IDAssignmentContext ctx) {
-         System.out.println(ctx.getText());
          Boolean res = true;
          String idset = ctx.idset().getText();
          // isto pode estar mal
+         res = visit(ctx.expr());
          Type exprType = ctx.expr().eType;
-         System.out.println(ctx.expr().eType);
-         System.out.println(ctx.expr().getText());
 
          // Visitar a expressão para **ver se é válida**
-         res = visit(ctx.expr());
+
          // Se não for válida, não vale a pena continuar.
          if (!res) return false;
          /*
@@ -272,8 +270,7 @@
             } else {
                // Check if the type of idset matches the type of the expression
                Type idsetType = declaredVariables.get(idset);
-               System.out.println(exprType);
-               if (false){ //!idsetType.equals(exprType.name())) {
+               if (!idsetType.name().equals(exprType.name())) {
                   if (idsetType.conformsTo(exprType)){
                      ErrorHandling.printWarning(ctx, "Assignment mismatch - Expected " + idsetType + " but found " + exprType.name() + ". However, assignment was still possible.");
                   } else {
@@ -419,10 +416,10 @@
                ctx.eType = fractionType;
             }
             if (declaredCodeClasses.contains(idset)) {
-               ctx.eType = codeType;
+               ctx.eType = textType;
             }
          }
-         if (!declaredVariables.containsKey(idset)) {
+         else if (!declaredVariables.containsKey(idset)) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, idset + " has not been declared.");
             return false;
@@ -434,7 +431,7 @@
                return false;
             }
             if ("question".equals(idsetType.name())) ctx.eType = fractionType;
-            if ("code".equals(idsetType.name())) ctx.eType = codeType;
+            if ("code".equals(idsetType.name())) ctx.eType = textType;
             if (!"question".equals(idsetType.name()) && !"code".equals(idsetType.name())) {
                //olha tira o "Error: " de todo  o lado a funcao já faz Error
                ErrorHandling.registerError();
@@ -547,20 +544,13 @@
       // JOAO
       @Override
       public Boolean visitUsesCodeDefined(QlangParser.UsesCodeDefinedContext ctx) {
-         Boolean res = true;
+         Boolean res = visit(ctx.idset());
          String idset = ctx.idset().getText();
 
-         if (!declaredVariables.containsKey(idset)) {
+         if (!declaredCodeClasses.contains(idset)) {
             ErrorHandling.registerError();
-            ErrorHandling.printError(ctx, "Erystem.out.pror: " + idset + " has not been declared.");
+            ErrorHandling.printError(ctx, idset + " has not been declared.");
             res = false;
-         } else {
-            String idsetType = declaredVariables.get(idset).name();
-            if (!"code".equals(idsetType)) {
-               ErrorHandling.registerError();
-               ErrorHandling.printError(ctx, idset + " must be of type 'code'. Found: " + idsetType);
-               return false;
-            }
          }
 
          if (res) {
@@ -683,7 +673,7 @@
       @Override
       public Boolean visitTextExpr(QlangParser.TextExprContext ctx) {
          Boolean res = true;
-         ctx.eType = stringType;
+         ctx.eType = textType;
          return true;
          // return res;
       }
@@ -691,11 +681,9 @@
       @Override
       public Boolean visitExecutionExpr(QlangParser.ExecutionExprContext ctx) {
          Boolean res = visit(ctx.execution());
-         System.out.println(ctx.execution().eType.name());
          ctx.eType = fractionType;
          if (!res) return false;
          ctx.eType = ctx.execution().eType;
-         System.out.println(ctx.eType.name());
          return res;
          // return res;
       }
@@ -723,7 +711,8 @@
       // antlr4-visitor STBuilder ST
       @Override
       public Boolean visitStdoutExpr(QlangParser.StdoutExprContext ctx) {
-         Boolean res = true;
+         Boolean res = visit(ctx.expr(0)) && visit(ctx.expr(1));
+
          if (!"text".equals(ctx.expr(0).eType.name())) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, "The input to a code block must be in the text format.");
@@ -736,7 +725,7 @@
             ErrorHandling.printError(ctx, "The input to a code block must be in the text format.");
             return false;
          }
-         ctx.eType = stringType;
+         ctx.eType = textType;
          res = visit(ctx.expr(0)) && visit(ctx.expr(1));
          return res;
          // return res;
@@ -808,7 +797,7 @@
       @Override
       public Boolean visitReadExpr(QlangParser.ReadExprContext ctx) {
          Boolean res = true;
-         ctx.eType = stringType;
+         ctx.eType = textType;
          return res;
          // return res;
       }

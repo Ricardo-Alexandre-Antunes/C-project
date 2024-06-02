@@ -9,10 +9,13 @@
 # conditional and loop instructions with similar syntax as PIL
 # arithmetic, logical and boolean expressions similar to PIL
 
+
 name: text;
 id: integer;
+#//
 result.name := read "Nome: "; # ask user for a text (with a prompt)
 id := integer(read "ID: ");
+//#
 
 # ; is a (required) statement separator
 

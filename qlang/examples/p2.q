@@ -1,8 +1,10 @@
+
 name: text;
 id: integer;
+#//
 result.name := read "Nome: "; # ask user for a text (with a prompt)
 id := integer(read "ID: ");
-
+//#
 println "Nome: " name ", id: " text(id); # text concatenation!
 # conversion between type similar to PIL
 
@@ -25,9 +27,9 @@ c: code; # code type variable
 
 c := new PIL.Example1;
 res: text;
-res := execute c1; # standard output stored in res
-res := "10" | execute c1; # uses "10" as standard input
-execute c1; # output goes to standard output
+res := execute c; # standard output stored in res
+res := "10" | execute c; # uses "10" as standard input
+execute c; # output goes to standard output
 
 # code execution outside a question has no impact on questionnaire grading
 code-hole Algorithm.Code1 is
