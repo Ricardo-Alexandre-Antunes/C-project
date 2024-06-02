@@ -35,6 +35,8 @@
                return questionType;
             case "fraction":
                return fractionType;
+            case "code":
+               return codeType;
             default:
                return null;
          }
@@ -42,36 +44,50 @@
 
       @Override
       public Boolean visitStatList(QlangParser.StatListContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.statementComposition());
          // return res;
       }
 
       @Override
       public Boolean visitStatementWithBreak(QlangParser.StatementWithBreakContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.statement());
          // return res;
       }
 
       @Override
       public Boolean visitStatementComposition(QlangParser.StatementCompositionContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         for (QlangParser.StatementWithBreakContext stmt : ctx.statementWithBreak()) {
+            res = res && visit(stmt);
+            if (!res) return res;
+         }
+         if (ctx.statement() != null) {
+            res = res && visit(ctx.statement());
+         }
+         return res;
          // return res;
       }
 
       @Override
       public Boolean visitCommandWithBreak(QlangParser.CommandWithBreakContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.command());
          // return res;
       }
 
       @Override
       public Boolean visitCommandComposition(QlangParser.CommandCompositionContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         for (QlangParser.CommandWithBreakContext cmd : ctx.commandWithBreak()) {
+            res = res && visit(cmd);
+            if (!res) return res;
+         }
+         if (ctx.command() != null) {
+            res = res && visit(ctx.command());
+         }
+         return res;
          // return res;
       }
 
@@ -118,18 +134,19 @@
       */
       @Override
       public Boolean visitNewQuestion(QlangParser.NewQuestionContext ctx) {
-         Boolean res = visit(ctx.idset());
+         Boolean res = true;
          if (res){
             String question = ctx.idset().getText();
             if (declaredVariables.containsKey(question)) {
                ErrorHandling.registerError();
                ErrorHandling.printError(ctx, "Cannot assign a Question Class to a previously declarated variable (even if question type)");
-               res = false;
+               return false;
             }
             if (declaredQuestionClasses.contains(question)) {
                   // Ricardo : Aqui acho que faz mais sentido deixar o utilizador mudar o tipo de questão mas avisar que está a ser feito um override.
                   ErrorHandling.registerError();
                   ErrorHandling.printWarning(ctx, "The question " + question + " had already been declared, and its definition has been overriden");
+                  return false;
                //if (!declaredVariables.get(question).equals(ctx.QUESTIONTYPES().getText())) res = false;
             } else {
                declaredQuestionClasses.add(ctx.idset().getText());
@@ -151,6 +168,11 @@
          String type = "code";
          if (ctx.VARIABLETYPES() != null) type = ctx.VARIABLETYPES().getText();
          
+         if (idset.equals("result")){
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Variable 'result' is reserved. You cannot declare over it.");
+            return false;
+         }
          // Ricardo : declarar uma variavel com . não faz sentido. É uma classe que deve ser inicializada de outra forma
          if (idset.contains(".")) {
             ErrorHandling.registerError();
@@ -221,10 +243,13 @@
       // hugo
       @Override
       public Boolean visitIDAssignment(QlangParser.IDAssignmentContext ctx) {
+         System.out.println(ctx.getText());
          Boolean res = true;
          String idset = ctx.idset().getText();
          // isto pode estar mal
          Type exprType = ctx.expr().eType;
+         System.out.println(ctx.expr().eType);
+         System.out.println(ctx.expr().getText());
 
          // Visitar a expressão para **ver se é válida**
          res = visit(ctx.expr());
@@ -247,7 +272,8 @@
             } else {
                // Check if the type of idset matches the type of the expression
                Type idsetType = declaredVariables.get(idset);
-               if (!idsetType.equals(exprType.name())) {
+               System.out.println(exprType);
+               if (false){ //!idsetType.equals(exprType.name())) {
                   if (idsetType.conformsTo(exprType)){
                      ErrorHandling.printWarning(ctx, "Assignment mismatch - Expected " + idsetType + " but found " + exprType.name() + ". However, assignment was still possible.");
                   } else {
@@ -259,7 +285,7 @@
             }
          }
 
-         return res && visitChildren(ctx);
+         return res;
          // return res;
       }
 
@@ -371,6 +397,7 @@
       @Override
       public Boolean visitExecution(QlangParser.ExecutionContext ctx) {
          Boolean res = true;
+         ctx.eType = fractionType;
          String idset = ctx.idset().getText();
 
          if (ctx.NEW() != null && (!declaredQuestionClasses.contains(idset) && !declaredCodeClasses.contains(idset))){
@@ -387,6 +414,14 @@
          // hugo: tou clueless
          
          }
+         if (ctx.NEW() != null){
+            if (declaredQuestionClasses.contains(idset)) {
+               ctx.eType = fractionType;
+            }
+            if (declaredCodeClasses.contains(idset)) {
+               ctx.eType = codeType;
+            }
+         }
          if (!declaredVariables.containsKey(idset)) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, idset + " has not been declared.");
@@ -398,6 +433,8 @@
                ErrorHandling.printError(ctx, idset + " is not a question-class or code-class.");
                return false;
             }
+            if ("question".equals(idsetType.name())) ctx.eType = fractionType;
+            if ("code".equals(idsetType.name())) ctx.eType = codeType;
             if (!"question".equals(idsetType.name()) && !"code".equals(idsetType.name())) {
                //olha tira o "Error: " de todo  o lado a funcao já faz Error
                ErrorHandling.registerError();
@@ -420,7 +457,7 @@
          Boolean res = true;
          String idset = ctx.idset().getText();
          
-         if (!declaredVariables.containsKey(idset)) {
+         if (!declaredVariables.containsKey(idset) && !idset.equals("result")) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx,  idset + " has not been declared.");
             return false;
@@ -459,21 +496,41 @@
                }
             }
          }
-         return visitChildren(ctx);
+         return res;
          // return res;
       }
 
       @Override
       public Boolean visitPrintLineSentence(QlangParser.PrintLineSentenceContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         if (ctx.expr() == null){
+            ErrorHandling.registerError();
+            ErrorHandling.printError(ctx, "Print sentence must have at least one string to print.");
+            return false;
+         }
+         else {
+            for (QlangParser.ExprContext expr : ctx.expr()) {
+               res = res && visit(expr);
+               if (!res) return res;
+               Type exprType = expr.eType;
+               if (!"text".equals(exprType.name())) {
+                  ErrorHandling.registerError();
+                  ErrorHandling.printError(ctx, "Only text can be printed (did you try to do an assignment but used the incorrect syntax?)");
+                  return false;
+               }
+            }
+         }
+         return res;
          // return res;
       }
 
       @Override
       public Boolean visitUsesCodeSentence(QlangParser.UsesCodeSentenceContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         if (ctx.codeholeComposition() != null) {
+            res = visit(ctx.codeholeComposition());
+         }
+         return res;
          // return res;
       }
 
@@ -507,7 +564,9 @@
          }
 
          if (res) {
-            res = visitChildren(ctx);
+            if (ctx.codeholeComposition() != null) {
+               res = visit(ctx.codeholeComposition());
+            }
          }
 
          return res;
@@ -517,58 +576,65 @@
       // nao apagar
       @Override
       public Boolean visitChoiceCommand(QlangParser.ChoiceCommandContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.expr());
          // return res;
       }
 
       @Override
       public Boolean visitExecutionCommand(QlangParser.ExecutionCommandContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.execution());
          // return res;
       }
       
       // comeca aqui -> Hugo
       @Override
       public Boolean visitIfLineSentenceCommand(QlangParser.IfLineSentenceCommandContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.ifLineSentence());
          // return res;
       }
 
       @Override
       public Boolean visitAssignmentCommand(QlangParser.AssignmentCommandContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.assignment());
          // return res;
       }
 
       @Override
       public Boolean visitDeclarationCommand(QlangParser.DeclarationCommandContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.declaration());
          // return res;
       }
 
       @Override
       public Boolean visitCodeholeComposition(QlangParser.CodeholeCompositionContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         for (QlangParser.CodeholeWithBreakContext codehole : ctx.codeholeWithBreak()) {
+            res = res && visit(codehole);
+            if (!res) return res;
+         }
+         if (ctx.codehole() != null) {
+            res = res && visit(ctx.codehole());
+         }
+         return res;
          // return res;
       }
 
       @Override
       public Boolean visitCodeholeWithBreak(QlangParser.CodeholeWithBreakContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return visit(ctx.codehole());
          // return res;
       }
 
       @Override
       public Boolean visitCodehole(QlangParser.CodeholeContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         return res;
          // return res;
       }
 
@@ -616,7 +682,7 @@
 
       @Override
       public Boolean visitTextExpr(QlangParser.TextExprContext ctx) {
-         Boolean res = null;
+         Boolean res = true;
          ctx.eType = stringType;
          return true;
          // return res;
@@ -624,9 +690,13 @@
 
       @Override
       public Boolean visitExecutionExpr(QlangParser.ExecutionExprContext ctx) {
-         Boolean res = null;
+         Boolean res = visit(ctx.execution());
+         System.out.println(ctx.execution().eType.name());
          ctx.eType = fractionType;
-         return visitChildren(ctx);
+         if (!res) return false;
+         ctx.eType = ctx.execution().eType;
+         System.out.println(ctx.eType.name());
+         return res;
          // return res;
       }
 
@@ -653,7 +723,7 @@
       // antlr4-visitor STBuilder ST
       @Override
       public Boolean visitStdoutExpr(QlangParser.StdoutExprContext ctx) {
-         Boolean res = null;
+         Boolean res = true;
          if (!"text".equals(ctx.expr(0).eType.name())) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, "The input to a code block must be in the text format.");
@@ -667,7 +737,8 @@
             return false;
          }
          ctx.eType = stringType;
-         return visitChildren(ctx);
+         res = visit(ctx.expr(0)) && visit(ctx.expr(1));
+         return res;
          // return res;
       }
 
@@ -703,7 +774,7 @@
                   break;
          }
       
-         return res && visitChildren(ctx);
+         return res && visit(ctx.expr());
       }
       
 
@@ -736,9 +807,9 @@
       //hugo
       @Override
       public Boolean visitReadExpr(QlangParser.ReadExprContext ctx) {
-         Boolean res = null;
+         Boolean res = true;
          ctx.eType = stringType;
-         return visitChildren(ctx);
+         return res;
          // return res;
       }
 
@@ -787,8 +858,14 @@
 
       @Override
       public Boolean visitIfLineSentence(QlangParser.IfLineSentenceContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = visit(ctx.ifBlock());
+         for (QlangParser.ElseifBlockContext elseif : ctx.elseifBlock()) {
+            res = res && visit(elseif);
+         }
+         if (ctx.elseBlock() != null) {
+            res = res && visit(ctx.elseBlock());
+         }
+         return res;
          // return res;
       }
 
@@ -837,8 +914,14 @@
 
       @Override
       public Boolean visitElseBlock(QlangParser.ElseBlockContext ctx) {
-         Boolean res = null;
-         return visitChildren(ctx);
+         Boolean res = true;
+         for (QlangParser.StatementContext stmtCtx : ctx.statement()) {
+            if (!visit(stmtCtx)) {
+               res = false;
+               break;
+            }
+         }
+         return res;
          // return res;
       }
 

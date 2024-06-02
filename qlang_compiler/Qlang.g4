@@ -46,7 +46,7 @@ assignment:
         | idset '->' expr  #HoleQuestionAssignment
         ;
 
-execution:
+execution returns [Type eType]:
         'execute' (expr',')? NEW? idset
         ;
 
