@@ -42,12 +42,12 @@ code:
 
 assignment:
         idset ':=' expr #IDAssignment
-        | idset ':=' 'new' idset #NewAssignment
+        | idset ':=' NEW idset #NewAssignment
         | idset '->' expr  #HoleQuestionAssignment
         ;
 
 execution:
-        'execute' (expr',')? (init=('new'))? idset
+        'execute' (expr',')? NEW? idset
         ;
 
 
@@ -56,8 +56,8 @@ export:
         ;
 
 command :  
-        'print' (assignment | expr)* #PrintSentence
-        | 'println' ((assignment | expr) ('|program')?)* #PrintLineSentence
+        'print' (assignment | expr)+ #PrintSentence
+        | 'println' ((assignment | expr) ('|program')?)+ #PrintLineSentence
         | 'uses code from' TEXT codeholeComposition? 'end' #UsesCodeSentence
         | 'uses code' idset codeholeComposition? 'end' #UsesCodeDefined
         | 'choice' (expr',')? TEXT 'end' #ChoiceCommand
@@ -106,7 +106,7 @@ elseBlock:
     'else'(statement)+
     ;
     
-
+NEW : 'new' ;
 QUESTIONTYPES : 'multi-choice' | 'hole' | 'open' | 'code-hole' | 'code-open' | 'code-output' | 'composed';
 VARIABLETYPES : 'integer' | 'real' | 'text' | 'question' | 'fraction' ;
 ANDTHEN: 'and then';
