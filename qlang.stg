@@ -104,7 +104,7 @@ AddQuestion(questionManager, question) ::= <%
    <questionManager>.addQuestion(<question>);
 %>
 
-NewCode(var, code)::= <%
+NewCode(var, code)tatList::= <%
    Code <var> = new Code(<code>)
 %>
 
