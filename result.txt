@@ -16,23 +16,13 @@ Solution: Undefined
 Grade: 100.0%
 --------------------
 Question 4: Complete o seguinte código.
-Answer: n % 2 = 0, else
+Answer: n % 2 = 0, if
 Solution: n % 2 = 0, else
-Grade: 100.0%
+Grade: 66.66666666666666%
 --------------------
-Question 5: Defina a estrutura de dados lista ligada.
-Answer: 
+Question 5: Implemente um programa que, pedindo um número inteiro do utilizador com o texto 'Number: ', escreva na consola se este é par (even) ou ímpar (odd).
+Answer: if ricardo := gay then: lgbt
 Solution: Undefined
-Grade: Undefined
---------------------
-Question 6: Defina a estrutura de dados lista ligada.
-Answer: 
-Solution: Undefined
-Grade: Undefined
---------------------
-Question 7: A atribuição de valor em PIL usa o operador .
-Answer: :=
-Solution: :=
 Grade: 100.0%
 --------------------
 Final Grade: Undefined
