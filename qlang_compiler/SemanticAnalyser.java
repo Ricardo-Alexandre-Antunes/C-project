@@ -1,6 +1,7 @@
    import java.util.ArrayList;
    import java.util.HashMap;
    import java.util.List;
+   import org.antlr.v4.runtime.ParserRuleContext;
 
    @SuppressWarnings("CheckReturnValue")
    public class SemanticAnalyser extends QlangBaseVisitor<Boolean> {
@@ -131,7 +132,7 @@
                   ErrorHandling.printWarning(ctx, "The question " + question + " had already been declared, and its definition has been overriden");
                //if (!declaredVariables.get(question).equals(ctx.QUESTIONTYPES().getText())) res = false;
             } else {
-               declaredQuestionClasses.put(ctx.idset().getText());
+               declaredQuestionClasses.add(ctx.idset().getText());
             }
          }
          return res && visit(ctx.commandComposition());
@@ -372,7 +373,7 @@
          Boolean res = true;
          String idset = ctx.idset().getText();
 
-         if (ctx.init != null && (!declaredQuestionClasses.contains(idset) && !declaredCodeClasses.contains(idset))){
+         if (ctx.NEW() != null && (!declaredQuestionClasses.contains(idset) && !declaredCodeClasses.contains(idset))){
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, idset + " is not a valid question or code class.");
             return false;  
@@ -392,7 +393,7 @@
             return false;
          } else {
             Type idsetType = declaredVariables.get(idset);
-            if (ctx.init != null) {
+            if (ctx.NEW() != null) {
                ErrorHandling.registerError();
                ErrorHandling.printError(ctx, idset + " is not a question-class or code-class.");
                return false;
@@ -425,7 +426,7 @@
             return false;
          }
 
-         res = res && visit(ctx.expr());
+         res = res && visit(ctx.expr()); //sem problemas
          if (!res) return res;
          Type exprType = ctx.expr().eType;
 
@@ -440,13 +441,23 @@
 
       @Override
       public Boolean visitPrintSentence(QlangParser.PrintSentenceContext ctx) {
-         Boolean res = null;
-         String idset = ctx.idset().getText();
-         
-         if (!declaredVariables.containsKey(idset)) {
+         Boolean res = true;
+         if (ctx.expr() == null){
             ErrorHandling.registerError();
-            ErrorHandling.printError(ctx,  idset + " has not been declared.");
+            ErrorHandling.printError(ctx, "Print sentence must have at least one string to print.");
             return false;
+         }
+         else {
+            for (QlangParser.ExprContext expr : ctx.expr()) {
+               res = res && visit(expr);
+               if (!res) return res;
+               Type exprType = expr.eType;
+               if (!"text".equals(exprType.name())) {
+                  ErrorHandling.registerError();
+                  ErrorHandling.printError(ctx, "Only text can be printed (did you try to do an assignment but used the incorrect syntax?)");
+                  return false;
+               }
+            }
          }
          return visitChildren(ctx);
          // return res;
@@ -578,7 +589,12 @@
       public Boolean visitIDExpr(QlangParser.IDExprContext ctx) {
          Boolean res = visit(ctx.idset());
          if (res) {
-            ctx.eType = ctx.idset().eType;
+            ctx.eType = declaredVariables.get(ctx.idset().getText());
+            if (ctx.eType == null) {
+               ErrorHandling.registerError();
+               ErrorHandling.printError(ctx, "Variable " + ctx.idset().getText() + " has not been declared.");
+               return false;
+            }
          }
          return res;
          // return res;
@@ -682,7 +698,7 @@
             default:
                   ErrorHandling.registerError();
                   //senhor easter egg
-                  ErrorHandling(ctx, "Achievement Unlocked: How did we get here?");
+                  ErrorHandling.printError(ctx, "Achievement Unlocked: How did we get here?");
                   res = false;
                   break;
          }
@@ -782,7 +798,7 @@
       public Boolean visitIfBlock(QlangParser.IfBlockContext ctx) {
          Boolean res = true;
          // Check if the expression inside the if condition is boolean
-         Type exprType = getTypeByExpression(ctx.expr());
+         Type exprType = getTypeByExpression(ctx.expr().getText());
          if (!(exprType instanceof BooleanType)) {
             ErrorHandling.registerError();
             ErrorHandling.printError(ctx, " The condition in the if statement must be of type boolean.");

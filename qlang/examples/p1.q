@@ -21,7 +21,7 @@ hole Question.q1 is
   # (and provides information for automatic grading).
 end; # automatic grading
 
-q := new Question.SpecificQuestion.q1;
+q := new Question.q1;
 g := execute q; # execute question stored in variable q
 # executing a question impacts on overall (result) questionnaire grading
 # g is the grade of this q execution
