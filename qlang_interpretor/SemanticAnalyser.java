@@ -1,5 +1,8 @@
 import java.util.HashMap;
 import java.util.regex.Pattern;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -211,6 +214,11 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
    @Override public Boolean visitExprId(PilParser.ExprIdContext ctx) {
       Boolean res = visit(ctx.idset());
       String id = ctx.idset().getText();
+
+      if (isReservedName(id)) {
+         ErrorHandling.printError(ctx, "Reserved keyword used as variable name!");
+         return false;
+      }
       
       if (variablesTypes.containsKey(id)) {
          switch (variablesTypes.get(id)) {
@@ -295,5 +303,15 @@ public class SemanticAnalyser extends PilBaseVisitor<Boolean> {
       else if ("boolean".equals(t1.name()) && "boolean".equals(t2.name()))
          res = t1;
       return res;
+   }
+
+   private static Boolean isReservedName(String variableName) {
+      Set<String> reservedKeywords = new HashSet<>(Arrays.asList(
+            "error", "read", "writeln", "write", "if", "else", "loop", "integer", "real", "text", 
+            "boolean", "not", "and", "or", "true", "false", "then", "end", "xor", "implies",
+            "while", "until", "do"
+            ));
+
+      return reservedKeywords.contains(variableName);
    }
 }
