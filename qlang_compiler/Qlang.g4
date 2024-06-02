@@ -46,7 +46,7 @@ assignment:
         | idset '->' expr  #HoleQuestionAssignment
         ;
 
-execution:
+execution returns [Type eType]:
         'execute' (expr',')? NEW? idset
         ;
 
@@ -106,7 +106,7 @@ elseBlock:
     'else'(statement)+
     ;
     
-NEW : 'new' ;
+NEW : 'new';
 QUESTIONTYPES : 'multi-choice' | 'hole' | 'open' | 'code-hole' | 'code-open' | 'code-output' | 'composed';
 VARIABLETYPES : 'integer' | 'real' | 'text' | 'question' | 'fraction' ;
 ANDTHEN: 'and then';
