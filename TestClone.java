@@ -758,9 +758,11 @@ class Forms {
         q4.execute(scanner);
 
         // Export results to file
-        questionManager_A.execute(scanner);
-        questionManager_A.execute(scanner);
-        questionManager_A.execute(scanner);
+        //questionManager_A.execute(scanner);
+        //questionManager_A.execute(scanner);
+        //questionManager_A.execute(scanner);
+
+        q3.execute(scanner);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
             result.exportToFile(writer);
